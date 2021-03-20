@@ -70,3 +70,5 @@ dkms.conf
 
 Thumbs.db
 
+tmp/
+
