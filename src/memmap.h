@@ -48,11 +48,20 @@ typedef int memmap_fd_t;
 #error "Unknown platform."
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 memmap_fd_t memmap_open(const char *filename, int flag, mode_t mode);
 int memmap_close(memmap_fd_t fd);
-void *memmap_map(void *address, size_t length, int protect, int flags, memmap_fd_t fd, off_t offset);
+void* memmap_map(void *address, size_t length, int protect, int flags, memmap_fd_t fd, off_t offset);
 int memmap_unmap(void *addr, size_t length);
 int memmap_sync(void *addr, size_t length, int flags);
+size_t memmap_get_file_size(memmap_fd_t fd);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MEMMAP_H__ */
 

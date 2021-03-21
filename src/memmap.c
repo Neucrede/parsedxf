@@ -37,7 +37,7 @@ int memmap_close(memmap_fd_t fd)
     return CloseHandle((HANDLE)fd) != 0 ? 0 : -1;
 }
 
-void *memmap_map(void *address, size_t length, int protect, int flags, memmap_fd_t fd, off_t offset)
+void* memmap_map(void *address, size_t length, int protect, int flags, memmap_fd_t fd, off_t offset)
 {
     HANDLE mapobj;
     void *map_addr;
@@ -88,8 +88,14 @@ int memmap_sync(void *addr, size_t length, int flags)
     return FlushViewOfFile(addr, 0) != 0 ? 0 : -1;
 }
 
+size_t memmap_get_file_size(memmap_fd_t fd)
+{
+    return (size_t)GetFileSize(fd, NULL);
+}
 
 #elif defined(__linux__) || defined(__unix__) || defined(_POSIX_VERSION)
+
+#include <sys/stat.h>
 
 memmap_fd_t memmap_open(const char *filename, int flag, mode_t mode)
 {
@@ -101,9 +107,17 @@ int memmap_close(memmap_fd_t fd)
     return close(fd);
 }
 
-void *memmap_map(void *address, size_t length, int protect, int flags, memmap_fd_t fd, off_t offset)
+void* memmap_map(void *address, size_t length, int protect, int flags, memmap_fd_t fd, off_t offset)
 {
-    return mmap(address, length, protect, flags, fd, offset);
+    size_t file_len;
+
+    if (length > 0) {
+        return mmap(address, length, protect, flags, fd, offset);
+    }
+    else {
+        file_len = memmap_get_file_size(fd);
+        return mmap(address, file_len, protect, flags, fd, offset);
+    }
 }
 
 int memmap_unmap(void *addr, size_t length)
@@ -114,6 +128,17 @@ int memmap_unmap(void *addr, size_t length)
 int memmap_sync(void *addr, size_t length, int flags)
 {
     return msync(addr, length, flags);
+}
+
+size_t memmap_get_file_size(memmap_fd_t fd)
+{
+    struct stat st;
+        
+    if (fstat(fd, &st) != 0) {
+        return 0;
+    }
+
+    return (size_t)st.st_size;
 }
 
 #endif
