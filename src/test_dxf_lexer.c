@@ -15,10 +15,9 @@ int main() {
         if (dxf_lexer_get_token(&desc) != 0) {
             break;
         }
-        malloc(1);
     }
 
-    dxf_lexer_close_desc(&desc, TRUE);
+    dxf_lexer_close_desc(&desc, 1);
 
     return 0;
 }

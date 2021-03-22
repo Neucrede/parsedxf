@@ -226,6 +226,11 @@ static int get_line(struct dxf_lexer_desc* const desc)
     } */
     
     end = desc->end;
+
+    if (desc->cur > end) {
+        return -1;
+    }
+
     ch = *(desc->cur);
     i = 0;
     while ((desc->cur < end) && (i < DXF_LEXER_MAX_LINE_LENGTH) &&
@@ -246,8 +251,13 @@ static int get_line(struct dxf_lexer_desc* const desc)
 static int next_line(struct dxf_lexer_desc* const desc)
 {
     char *end = desc->end;
-    char ch = *(desc->cur);
+    char ch;
+
+    if (desc->cur > end) {
+        return -1;
+    }
     
+    ch = *(desc->cur);
     while ((desc->cur < end) && (ch != '\r') && (ch != '\n')) {
         ch = *(++(desc->cur));
     }
