@@ -272,9 +272,6 @@ static int next_line(struct dxf_lexer_desc* const desc)
                 return -1;
             }
         }
-        else if (ch == '\n') {
-            ++(desc->cur);
-        }
     }
     
     return desc->cur <= end ? 0 : -1;
