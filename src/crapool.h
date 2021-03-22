@@ -14,7 +14,7 @@
 struct crapool_desc;
 struct crapool_desc {
     size_t free_space;
-    void *next_free;
+    char *next_free;
 
     struct crapool_desc *next;
     struct crapool_desc *tail;

@@ -206,13 +206,17 @@ static const struct dxf_group_code_desc *xlat_tab_get(int grp_code)
 static int skip_blanks(struct dxf_lexer_desc* const desc)
 {
     char *end = desc->end;
-    char ch = *(desc->cur);
-    
-    while ((desc->cur < end) && ((ch == ' ') || (ch == '\t'))) {
-        ch = *(++(desc->cur));  
+    char ch;
+
+    if (desc->cur > end) {
+        return -1;
     }
     
-    return desc->cur < end ? 0 : -1;
+    do {
+        ch = *(desc->cur++);  
+    } while ((desc->cur <= end) && ((ch == ' ') || (ch == '\t')));
+
+    return desc->cur <= end ? 0 : -1;
 }
 
 static int get_line(struct dxf_lexer_desc* const desc)
@@ -221,46 +225,59 @@ static int get_line(struct dxf_lexer_desc* const desc)
     char *end;
     char ch;
     
-/*  if (skip_blanks(desc) != 0) {
-        return -1;
-    } */
-    
     end = desc->end;
-    ch = *(desc->cur);
-    i = 0;
-    while ((desc->cur < end) && (i < DXF_LEXER_MAX_LINE_LENGTH) &&
-            (ch != '\r') && (ch != '\n')) 
-    {
-        desc->line_buf[i++] = ch;
-        ch = *(++(desc->cur));
+
+    if (desc->cur > end) {
+        return -1;
     }
+
+    i = 0;
+    do {
+        ch = *(desc->cur);
+        if ((ch != '\r') && (ch != '\n')) {
+            desc->line_buf[i++] = ch;
+            ++(desc->cur);
+        }
+        else {
+            break;
+        }
+    } while ((desc->cur <= end) && (i < DXF_LEXER_MAX_LINE_LENGTH));
+
     desc->line_buf[i] = '\0';
     dbgprint("dxf_lexer: Current line is \n%s \n", desc->line_buf);
     
     /* Skip remaining text in this line if any. */
     next_line(desc);
     
-    return i + 1;
+    return i;
 }
 
 static int next_line(struct dxf_lexer_desc* const desc)
 {
     char *end = desc->end;
-    char ch = *(desc->cur);
-    
-    while ((desc->cur < end) && (ch != '\r') && (ch != '\n')) {
-        ch = *(++(desc->cur));
+    char ch;
+
+    if (desc->cur > end) {
+        return -1;
     }
     
-    if ((desc->cur < end) && (ch == '\r')) {
-        ch = *(++(desc->cur));
-        if (ch != '\n') {
-            return -1;
+    do {
+        ch = *(desc->cur++);  
+    } while ((desc->cur <= end) && (ch != '\r') && (ch != '\n'));
+    
+    if (desc->cur <= end) {
+        if (ch == '\r') {
+            ch = *(desc->cur++);
+            if (ch != '\n') {
+                return -1;
+            }
         }
-        ++(desc->cur);
+        else if (ch == '\n') {
+            ++(desc->cur);
+        }
     }
     
-    return desc->cur < end ? 0 : -1;
+    return desc->cur <= end ? 0 : -1;
 }
 
 static int scan_integer(struct dxf_lexer_desc* const desc, int *pi)
@@ -307,13 +324,13 @@ static int scan_string(struct dxf_lexer_desc* const desc, char **buf)
         return -1;
     }
     
-    if ((desc->token.value.str = (char*)crapool_alloc(desc->pool, len)) == NULL) {
+    if ((desc->token.value.str = (char*)crapool_alloc(desc->pool, len + 1)) == NULL) {
         return -1;
     }
-    strcpy(desc->token.value.str, desc->line_buf);
+    memcpy(desc->token.value.str, desc->line_buf, len + 1);
     
     if (buf != NULL) {
-        strcpy(*buf, desc->line_buf);
+        memcpy(*buf, desc->line_buf, len + 1);
     }
     
     return 0;
@@ -413,12 +430,7 @@ int dxf_lexer_get_token(struct dxf_lexer_desc* const desc)
     grp_code_desc = xlat_tab_get(grp_code);
     
     desc->token.tag = grp_code_desc->tag;
-    if (grp_code_desc->scanner == (pfn_scanner_t)scan_string ||
-        grp_code_desc->scanner == (pfn_scanner_t)scan_binary)
-    {
-        
-    }
-    grp_code_desc->scanner(desc, &(desc->token.value));
+    grp_code_desc->scanner(desc, NULL);
     
     dbgprint("dxf_lexer: Token tag=%d, ", grp_code_desc->tag);
     if (grp_code_desc->scanner == (pfn_scanner_t)scan_string) {

@@ -32,7 +32,7 @@ struct crapool_desc* crapool_create(size_t size, void* const mutex)
 {
     size_t alloc_size;
     struct crapool_desc *desc;
-    void *buf;
+    char *buf;
 
     if (size == 0) {
         return NULL;
@@ -48,7 +48,7 @@ struct crapool_desc* crapool_create(size_t size, void* const mutex)
     if ((desc = (struct crapool_desc*)malloc(alloc_size)) == NULL) {
         return NULL;
     }
-    buf = desc + sizeof(struct crapool_desc);
+    buf = (char*)desc + sizeof(struct crapool_desc);
 
     desc->next_free = buf;
     desc->free_space = alloc_size - sizeof(struct crapool_desc);
@@ -80,7 +80,7 @@ void* crapool_alloc(struct crapool_desc* const desc, size_t size)
 {
     struct crapool_desc *desc_avail;
     struct crapool_desc *curr_desc;
-    void *space;
+    char *space;
 
     if (size == 0) {
         return NULL;
