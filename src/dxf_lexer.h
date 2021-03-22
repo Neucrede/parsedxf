@@ -3,6 +3,11 @@
 
 #include <sys/types.h>
 #include "memmap.h"
+#include "crapool.h"
+
+#define DXF_LEXER_DESC_INITIAL_POOL_SIZE 4096
+#define DXF_LEXER_LINE_BUFFER_SIZE 2048
+#define DXF_LEXER_MAX_LINE_LENGTH (DXF_LEXER_LINE_BUFFER_SIZE - 1)
 
 /* tags */
 #define DXF_INVALID_TAG 0
@@ -68,11 +73,15 @@
 #define DXF_EXT_DATA_INTEGER16 60
 #define DXF_EXT_DATA_INTEGER32 61
 
+struct dxf_lexer_desc;
+typedef int (*pfn_scanner_t)(struct dxf_lexer_desc* const, void*);
+
 struct dxf_group_code_desc {
     int tag;
     char *name;
     int range_start;
     int range_end;
+    pfn_scanner_t scanner;
 };
 
 struct dxf_token {
@@ -91,6 +100,8 @@ struct dxf_lexer_desc {
     char *end;
     memmap_fd_t fd;
     int err;
+    char line_buf[DXF_LEXER_LINE_BUFFER_SIZE];
+    struct crapool_desc *pool;
     struct dxf_token token;
 };
 
@@ -104,8 +115,9 @@ extern "C" {
 
 int dxf_lexer_init();
 int dxf_lexer_init_desc(struct dxf_lexer_desc* const desc);
-int dxf_lexer_open_desc(struct dxf_lexer_desc* const desc, const char *filename);
-int dxf_lexer_close_desc(struct dxf_lexer_desc* const desc);
+int dxf_lexer_open_desc(struct dxf_lexer_desc* const desc, const char *filename, 
+                        struct crapool_desc* const pool);
+int dxf_lexer_close_desc(struct dxf_lexer_desc* const desc, int destroy_pool);
 int dxf_lexer_get_token(struct dxf_lexer_desc* const desc);
 
 #ifdef __cplusplus
@@ -113,4 +125,3 @@ int dxf_lexer_get_token(struct dxf_lexer_desc* const desc);
 #endif
 
 #endif /* __DXF_LEXER_H__ */
-
