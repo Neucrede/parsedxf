@@ -102,6 +102,7 @@ void* crapool_alloc(struct crapool_desc* const desc, size_t size)
                 space = curr_desc->next_free;
                 curr_desc->next_free += size;
 
+                unlock_desc(desc);
                 dbgprint("crapool: Returning allocated space @0x%x. \n", space);
                 return space;
             }
@@ -117,6 +118,7 @@ void* crapool_alloc(struct crapool_desc* const desc, size_t size)
 #else
     if ((desc_avail = crapool_create(size, NULL)) == NULL) {
 #endif
+        unlock_desc(desc);
         return NULL;
     }
     
