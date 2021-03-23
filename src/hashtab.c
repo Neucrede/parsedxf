@@ -3,16 +3,16 @@
 #include "hashtab.h"
 #include "dbgprint.h"
 
-static int default_keycmp(const void *src, const void *dest);
+static int default_keycmp(const void** const src, const void** const dest);
 static size_t inflate_len(size_t p);
 static int inflate(struct hashtable* const hashtab);
 static int put_value(struct crapool_desc* const pool, struct hashtable_entry* const entry, 
                     void *value, int value_copy_mode, size_t value_size);
 
-static int default_keycmp(const void *src, const void *dest)
+static int default_keycmp(const void** const src, const void** const dest)
 {
     if (src != NULL && dest != NULL) {
-        return (*((char*)src) == *((char*)dest)) ? 0 : 1;
+        return (*(*(char** const)src) == *(*(char** const)dest)) ? 0 : 1;
     }
     
     return 1;
@@ -143,7 +143,7 @@ int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode,
     for (entry = hashtab->table[slot]; entry != NULL; entry = entry->next) {
         dbgprint("hashtab: Examing entry @0x%x, hash=0x%x. \n", entry, hash);
         if (entry->hash == hash) {
-            if (hashtab->keycmp_fcn(key, (void*)(&(entry->key))) == 0) {
+            if (hashtab->keycmp_fcn((const void** const)&key, (const void ** const)(&(entry->key))) == 0) {
                 dbgprint("hashtab: Key comparison succeeded. Put value into entry @0x%x, hash=0x%x. \n", entry, hash);
                 retval = put_value(hashtab->pool, entry, value, value_copy_mode, value_size);
                 goto hashtable_put_ret;
@@ -222,7 +222,7 @@ const void* const hashtable_get(struct hashtable* const hashtab, void *key)
     for (entry = hashtab->table[slot]; entry != NULL; entry = entry->next) {
         dbgprint("hashtab: Examing entry @0x%x, hash=0x%x. \n", entry, hash);
         if (entry->hash == hash) {
-            if (hashtab->keycmp_fcn(key, (void*)(&(entry->key))) == 0) {
+            if (hashtab->keycmp_fcn((const void ** const)&key, (const void ** const)(&(entry->key))) == 0) {
 #ifdef USE_PTHREAD
                 pthread_rwlock_unlock(hashtab->rwlock);
 #endif

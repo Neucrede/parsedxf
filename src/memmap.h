@@ -9,6 +9,14 @@
 
 #include <windows.h>
 
+#ifndef O_ACCMODE
+#define O_ACCMODE 0x07
+#endif
+
+#ifdef _MSC_VER
+#define mode_t unsigned int
+#endif
+
 /* protect */
 #define MEMMAP_READ 1
 #define MEMMAP_WRITE 2

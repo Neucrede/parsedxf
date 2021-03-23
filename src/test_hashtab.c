@@ -13,8 +13,8 @@ unsigned int str_hash(const char *sz) {
     return 999;
 }
 
-int str_cmp(const char *sz1, const char *sz2) {
-    return strcmp(sz1, sz2);
+int str_cmp(const char **psz1, const char **psz2) {
+    return strcmp(*psz1, *psz2);
 }
 
 int main(int argc, char* argv[])
@@ -32,11 +32,11 @@ int main(int argc, char* argv[])
         return 1;
     }
     
-    hashtable_put(&hashtab, key1, HASHTABLE_COPY_VALUE, sizeof(key1),
+    hashtable_put(&hashtab, &key1, HASHTABLE_COPY_VALUE, sizeof(key1),
                     sz1, HASHTABLE_COPY_MEMORY, strlen(sz1) + 1);
-    hashtable_put(&hashtab, key2, HASHTABLE_COPY_VALUE, sizeof(key2),
+    hashtable_put(&hashtab, &key2, HASHTABLE_COPY_VALUE, sizeof(key2),
                     &sz2, HASHTABLE_COPY_VALUE, sizeof(sz2));
-    hashtable_put(&hashtab, key3, HASHTABLE_COPY_VALUE, sizeof(key3),
+    hashtable_put(&hashtab, &key3, HASHTABLE_COPY_VALUE, sizeof(key3),
                     sz3, HASHTABLE_COPY_MEMORY, strlen(sz3) + 1);
     
     printf("%s \n", *(char**)hashtable_get(&hashtab, key1));

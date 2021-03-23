@@ -65,7 +65,7 @@ void* memmap_map(void *address, size_t length, int protect, int flags, memmap_fd
     map_addr = MapViewOfFileEx(
             mapobj, 
             access, 
-            (DWORD)(offset >> 32), 
+            0, 
             (DWORD)(offset & 0xFFFFFFFF), 
             (DWORD)length, 
             address);

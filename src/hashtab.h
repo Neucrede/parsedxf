@@ -14,8 +14,8 @@
 #define HASHTABLE_COPY_VALUE 0
 #define HASHTABLE_COPY_MEMORY 1
 
-typedef unsigned int (*pfn_hash_t)(const void *);
-typedef int (*pfn_keycmp_t)(const void *, const void *);
+typedef unsigned int (*pfn_hash_t)(const void*);
+typedef int (*pfn_keycmp_t)(const void** const, const void** const);
 
 struct hashtable_entry;
 struct hashtable_entry {
@@ -43,7 +43,7 @@ struct hashtable_entry {
 
 struct hashtable {
     size_t len;
-    int occupied;
+    size_t occupied;
     size_t inflate_threshold;
     struct crapool_desc *pool;
     struct hashtable_entry **table;
