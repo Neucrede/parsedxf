@@ -1,5 +1,4 @@
 #include <stdio.h>  /* printf(),... */
-#include <conio.h>  /* getch(),...  */
 #include <string.h>
 #include "hashtab.h"
 
@@ -42,9 +41,6 @@ int main(int argc, char* argv[])
     printf("%s \n", *(char**)hashtable_get(&hashtab, key1));
     printf("%s \n", *(char**)hashtable_get(&hashtab, key2));
     printf("%s \n", *(char**)hashtable_get(&hashtab, key3));
-    
-    puts("Press any key to exit");
-    getch();
     
     return 0;
 }
