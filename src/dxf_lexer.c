@@ -6,7 +6,7 @@
 #include "memmap.h"
 #include "dbgprint.h"
 
-#define GROUP_CODE_TAG_XLAT_TAB_LEN 128
+#define GROUP_CODE_TAG_XLAT_TAB_LEN 127
 
 struct xlat_tab_entry;
 struct xlat_tab_entry {
@@ -427,18 +427,5 @@ int dxf_lexer_get_token(struct dxf_lexer_desc* const desc)
     grp_code_desc = xlat_tab_get(grp_code);
     
     desc->token.tag = grp_code_desc->tag;
-    grp_code_desc->scanner(desc, NULL);
-    
-    dbgprint("dxf_lexer: Token tag=%d, ", grp_code_desc->tag);
-    if (grp_code_desc->scanner == (pfn_scanner_t)scan_string) {
-        dbgprint("value=%s \n", desc->token.value.str);
-    } else if (grp_code_desc->scanner == (pfn_scanner_t)scan_integer) {
-        dbgprint("value=%i \n", desc->token.value.i);
-    } else if (grp_code_desc->scanner == (pfn_scanner_t)scan_float) {
-        dbgprint("value=%f \n", desc->token.value.f);
-    } else {
-        dbgprint("\n");
-    }
-    
-    return 0;
+    return grp_code_desc->scanner(desc, NULL);
 }

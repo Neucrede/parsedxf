@@ -10,12 +10,14 @@
 #define CRAPOOL_LIBC_ALLOC_THRESHOLD 1024000
 #define CRAPOOL_SIZE_MULTIPLE (1 << 3)
 #define CRAPOOL_SIZE_MIN 4096
+#define CRAPOOL_SKIP_EXAMING_SIZE_THRESHOLD 32
 
 struct crapool_desc;
 struct crapool_desc {
     size_t free_space;
     char *next_free;
 
+    struct crapool_desc *head_allocable_desc;
     struct crapool_desc *next;
     struct crapool_desc *tail;
 #ifdef USE_PTHREAD
