@@ -21,10 +21,6 @@ unsigned int int_hash(const int *i) {
     return (unsigned int)i;
 }
 
-int int_cmp(const int *i, const int *j) {
-    
-}
-
 int main(int argc, char* argv[])
 {
     struct hashtable hashtab;

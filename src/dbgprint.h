@@ -12,7 +12,7 @@
 
     #define dbgprint(sz, ...) fprintf(stdout, sz, ##__VA_ARGS__)
 #else
-    #define dbgprint(sz, args...) (void)0
+    #define dbgprint(...)
 #endif
 
 #endif /* __DBGPRINT_H__ */

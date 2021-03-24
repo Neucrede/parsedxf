@@ -10,6 +10,7 @@ struct dxf_entity;
 struct dxf {
     struct hashtable header;
     struct dxf_layer *layers;
+    struct dxf_layer *last_accessed_layer;
     struct crapool_desc *pool;
 };
 
@@ -55,9 +56,13 @@ struct dxf_line {
 extern "C" {
 #endif
     
-int dxf_init(struct dxf* const dxf, size_t size_reserved);
-int dxf_add_layer(struct dxf* const dxf, const char *name);
-    
+int dxf_init(struct dxf* const dxf, size_t pool_size);
+struct dxf_layer* dxf_add_layer(struct dxf* const dxf, const char *name);
+const struct dxf_layer* dxf_get_layer(struct dxf* const dxf, const char *name);
+int dxf_add_entity(struct dxf* const dxf, const char* layer_name,
+                    struct dxf_entity* entity);
+void* dxf_pool_alloc(struct dxf* const dxf, size_t size);
+
 #ifdef __cplusplus
 }
 #endif

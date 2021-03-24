@@ -356,7 +356,7 @@ int dxf_lexer_init_desc(struct dxf_lexer_desc* const desc)
     desc->buf = NULL;
     desc->cur = NULL;
     desc->end = NULL;
-    desc->last = NULL;
+    desc->prev = NULL;
     desc->fd = (memmap_fd_t)0;
     desc->err = EBADF;
     desc->pool = NULL;
@@ -384,7 +384,7 @@ int dxf_lexer_open_desc(struct dxf_lexer_desc* const desc, const char *filename,
     if (desc->buf != NULL) {
         desc->fd = fd;
         desc->cur = desc->buf;
-        desc->last = desc->cur;
+        desc->prev = desc->cur;
         desc->end = (char*)(desc->buf + file_len - 1);
     }
     else {
@@ -428,7 +428,7 @@ int dxf_lexer_get_token(struct dxf_lexer_desc* const desc)
     int grp_code;
     const struct dxf_group_code_desc* grp_code_desc;
     
-    desc->last = desc->cur;
+    desc->prev = desc->cur;
     
     if (scan_integer(desc, &grp_code) != 0) {
         return -1;
@@ -448,10 +448,11 @@ int dxf_lexer_get_token(struct dxf_lexer_desc* const desc)
 
 int dxf_lexer_unget_token(struct dxf_lexer_desc* const desc)
 {
-    if (desc->cur == desc->last) {
+    if (desc->cur == desc->prev) {
         return -1;
     }
     
-    desc->cur = desc->last;
+    desc->cur = desc->prev;
     memcpy(&(desc->token), &dxf_invalid_token, sizeof(struct dxf_token));
+    return 0;
 }

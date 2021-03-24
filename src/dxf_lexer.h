@@ -9,7 +9,7 @@
 #define DXF_LEXER_LINE_BUFFER_SIZE 2048
 #define DXF_LEXER_MAX_LINE_LENGTH (DXF_LEXER_LINE_BUFFER_SIZE - 1)
 
-/* tags */
+/* Lexer tags */
 #define DXF_INVALID_TAG 0
 #define DXF_ENTITY_TYPE 1
 #define DXF_ENTITY_PRIMARY_TEXT 2
@@ -79,8 +79,8 @@ typedef int (*pfn_scanner_t)(struct dxf_lexer_desc* const, void*);
 struct dxf_group_code_desc {
     int tag;
     char *name;
-    int range_start;
-    int range_end;
+    unsigned int range_start;
+    unsigned int range_end;
     pfn_scanner_t scanner;
 };
 
@@ -98,7 +98,7 @@ struct dxf_token {
 struct dxf_lexer_desc {
     char *buf;
     char *cur;
-    char *last;
+    char *prev;
     char *end;
     memmap_fd_t fd;
     int err;
