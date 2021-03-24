@@ -1,19 +1,21 @@
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include "crapool.h"
 #include "dbgprint.h"
+
+#define NO_DBGPRINT
 
 #ifdef USE_PTHREAD
     #include <pthread.h>
 #endif
 
-static int lock_desc(struct crapool_desc* const desc);
-static int unlock_desc(struct crapool_desc* const desc);
-
 static int lock_desc(struct crapool_desc* const desc)
 {
-#ifdef USE_PTHREAD
+#if defined(USE_PTHREAD) && defined(CRAPOOL_LOCK_ENABLED)
+#if (CRAPOOL_LOCK_ENABLED == 1)
     return pthread_mutex_lock(desc->mutex);
+#endif
 #else
     return 0;
 #endif
@@ -21,8 +23,10 @@ static int lock_desc(struct crapool_desc* const desc)
 
 static int unlock_desc(struct crapool_desc* const desc)
 {
-#ifdef USE_PTHREAD
+#if defined(USE_PTHREAD) && defined(CRAPOOL_LOCK_ENABLED)
+#if (CRAPOOL_LOCK_ENABLED == 1)
     return pthread_mutex_unlock(desc->mutex);
+#endif
 #else
     return 0;
 #endif
@@ -56,7 +60,8 @@ struct crapool_desc* crapool_create(size_t size, void* const mutex)
     desc->next = NULL;
     desc->tail = desc;
 
-#ifdef USE_PTHREAD
+#if defined(USE_PTHREAD) && defined(CRAPOOL_LOCK_ENABLED)
+#if (CRAPOOL_LOCK_ENABLED == 1)
     if (mutex != NULL) {
         dbgprint("crapool: Copying mutex @0x%x.\n", mutex);
         desc->mutex = mutex;
@@ -69,6 +74,7 @@ struct crapool_desc* crapool_create(size_t size, void* const mutex)
         dbgprint("crapool: Created mutex @0x%x. \n", desc->mutex);
         pthread_mutex_init(desc->mutex, NULL);
     }
+#endif
 #endif
     
     dbgprint("crapool: New desc @0x%x: free_space=%d, next_free=@0x%x. \n",
@@ -131,8 +137,10 @@ void* crapool_alloc(struct crapool_desc* const desc, size_t size)
 
     dbgprint("crapool: Creating new descriptor. \n");
     
-#ifdef USE_PTHREAD
+#if defined(USE_PTHREAD) && defined(CRAPOOL_LOCK_ENABLED)
+#if (CRAPOOL_LOCK_ENABLED == 1)
     if ((desc_avail = crapool_create(size, desc->mutex)) == NULL) {
+#endif
 #else
     if ((desc_avail = crapool_create(size, NULL)) == NULL) {
 #endif
@@ -160,13 +168,28 @@ void* crapool_alloc(struct crapool_desc* const desc, size_t size)
     return space;
 }
 
+void* crapool_calloc(struct crapool_desc* const desc, size_t count, size_t elmsize)
+{
+    size_t size = count * elmsize;
+    void *buf;
+        
+    if ((buf = crapool_alloc(desc, size)) == NULL) {
+        return NULL;
+    }
+    
+    memset(buf, 0, size);
+    return buf;
+}
+    
 int crapool_destroy(struct crapool_desc* const desc)
 {
     struct crapool_desc *curr;
     struct crapool_desc *next;
 
-#ifdef USE_PTHREAD
+#if defined(USE_PTHREAD) && defined(CRAPOOL_LOCK_ENABLED)
+#if (CRAPOOL_LOCK_ENABLED == 1)
     pthread_mutex_t *mtx = desc->mutex;
+#endif
 #endif
 
     lock_desc(desc);
@@ -183,8 +206,10 @@ int crapool_destroy(struct crapool_desc* const desc)
 
     unlock_desc(desc);
 
-#ifdef USE_PTHREAD
+#if defined(USE_PTHREAD) && defined(CRAPOOL_LOCK_ENABLED)
+#if (CRAPOOL_LOCK_ENABLED == 1)
     pthread_mutex_destroy(mtx);
+#endif
 #endif
 
     return 0;

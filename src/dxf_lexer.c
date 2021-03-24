@@ -11,18 +11,18 @@
 struct xlat_tab_entry;
 struct xlat_tab_entry {
     struct xlat_tab_entry *next;
-    int group_code;
+    unsigned int group_code;
     const struct dxf_group_code_desc *desc;
 };
 
 struct xlat_tab {
-    int len;
+    size_t len;
     struct xlat_tab_entry *table;
 } group_code_desc_xlat_tab;
 
 static int xlat_tab_init();
-static int xlat_tab_put(int grp_code, const struct dxf_group_code_desc *desc);
-static const struct dxf_group_code_desc *xlat_tab_get(int grp_code);
+static int xlat_tab_put(unsigned int grp_code, const struct dxf_group_code_desc *desc);
+static const struct dxf_group_code_desc *xlat_tab_get(unsigned int grp_code);
 static int skip_blanks(struct dxf_lexer_desc* const desc);
 static int get_line(struct dxf_lexer_desc* const desc);
 static int next_line(struct dxf_lexer_desc* const desc);
@@ -109,15 +109,15 @@ const struct dxf_group_code_desc dxf_group_code_descs[] = {
     { DXF_INVALID_TAG, NULL, -1, -1, (pfn_scanner_t)scan_string }
 };
 
-const struct dxf_token dxf_invalid_token = { DXF_INVALID_TAG, NULL };
+const struct dxf_token dxf_invalid_token = { DXF_INVALID_TAG, -1, NULL };
 
 static int xlat_tab_init()
 {
     struct xlat_tab *tab = &group_code_desc_xlat_tab;
-    int len = GROUP_CODE_TAG_XLAT_TAB_LEN; 
-    int slot;
+    size_t len = GROUP_CODE_TAG_XLAT_TAB_LEN; 
+    unsigned int slot;
     const struct dxf_group_code_desc *desc;
-    int grp_code;
+    unsigned int grp_code;
 
     tab->len = len;
     if ((tab->table = (struct xlat_tab_entry*)malloc(len * sizeof(struct xlat_tab_entry))) == NULL) {
@@ -150,10 +150,10 @@ static int xlat_tab_init()
     return 0;
 }
 
-static int xlat_tab_put(int grp_code, const struct dxf_group_code_desc *desc)
+static int xlat_tab_put(unsigned int grp_code, const struct dxf_group_code_desc *desc)
 {
     struct xlat_tab *tab = &group_code_desc_xlat_tab;
-    int slot = grp_code % tab->len;
+    unsigned int slot = grp_code % tab->len;
     struct xlat_tab_entry *first_entry = &tab->table[slot];
     struct xlat_tab_entry *entry = first_entry;
     struct xlat_tab_entry *new_entry;
@@ -185,10 +185,10 @@ static int xlat_tab_put(int grp_code, const struct dxf_group_code_desc *desc)
     return 0;
 }
 
-static const struct dxf_group_code_desc *xlat_tab_get(int grp_code)
+static const struct dxf_group_code_desc *xlat_tab_get(unsigned int grp_code)
 {
     struct xlat_tab *tab = &group_code_desc_xlat_tab;
-    int slot = grp_code % tab->len;
+    unsigned int slot = grp_code % tab->len;
     struct xlat_tab_entry *entry = &tab->table[slot];
 
     do {
@@ -356,6 +356,7 @@ int dxf_lexer_init_desc(struct dxf_lexer_desc* const desc)
     desc->buf = NULL;
     desc->cur = NULL;
     desc->end = NULL;
+    desc->last = NULL;
     desc->fd = (memmap_fd_t)0;
     desc->err = EBADF;
     desc->pool = NULL;
@@ -372,12 +373,18 @@ int dxf_lexer_open_desc(struct dxf_lexer_desc* const desc, const char *filename,
     size_t file_len;
     
     fd = memmap_open(filename, O_RDONLY, 0);
+    
+    if (fd == (memmap_fd_t)(-1)) {
+        return -1;
+    }
+    
     file_len = memmap_get_file_size(fd);
     desc->buf = (char*)memmap_map(NULL, file_len, MEMMAP_READ, MEMMAP_SHARED, fd, 0);
     
     if (desc->buf != NULL) {
         desc->fd = fd;
         desc->cur = desc->buf;
+        desc->last = desc->cur;
         desc->end = (char*)(desc->buf + file_len - 1);
     }
     else {
@@ -417,8 +424,11 @@ int dxf_lexer_close_desc(struct dxf_lexer_desc* const desc, int destroy_pool)
 
 int dxf_lexer_get_token(struct dxf_lexer_desc* const desc)
 {
+    int retval;
     int grp_code;
     const struct dxf_group_code_desc* grp_code_desc;
+    
+    desc->last = desc->cur;
     
     if (scan_integer(desc, &grp_code) != 0) {
         return -1;
@@ -427,5 +437,21 @@ int dxf_lexer_get_token(struct dxf_lexer_desc* const desc)
     grp_code_desc = xlat_tab_get(grp_code);
     
     desc->token.tag = grp_code_desc->tag;
-    return grp_code_desc->scanner(desc, NULL);
+    desc->token.group_code = grp_code;
+    retval = grp_code_desc->scanner(desc, NULL);
+    
+    dbgprint("dxf_lexer: Current token tag=%d, group_code=%d, value=@0x%x \n",
+            desc->token.tag, desc->token.group_code, &(desc->token.value));
+            
+    return retval;
+}
+
+int dxf_lexer_unget_token(struct dxf_lexer_desc* const desc)
+{
+    if (desc->cur == desc->last) {
+        return -1;
+    }
+    
+    desc->cur = desc->last;
+    memcpy(&(desc->token), &dxf_invalid_token, sizeof(struct dxf_token));
 }

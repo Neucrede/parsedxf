@@ -3,10 +3,16 @@
 
 #include <stdio.h>
 
-#if defined(DEBUG) || defined(_DEBUG) || defined(_DEBUG_) || defined(__DEBUG__)
-#define dbgprint(sz, ...) fprintf(stdout, sz, ##__VA_ARGS__)
+#ifdef NO_DBGPRINT
+    #define dbgprint(sz, args...) (void)0
+#elif defined(DEBUG) || defined(_DEBUG) || defined(_DEBUG_) || defined(__DEBUG__)
+    #ifndef DEBUG
+        #define DEBUG 1
+    #endif
+
+    #define dbgprint(sz, ...) fprintf(stdout, sz, ##__VA_ARGS__)
 #else
-#define dbgprint(sz, args...) (void)0
+    #define dbgprint(sz, args...) (void)0
 #endif
 
 #endif /* __DBGPRINT_H__ */

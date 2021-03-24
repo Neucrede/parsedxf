@@ -7,7 +7,7 @@ memmap_fd_t memmap_open(const char *filename, int flag, mode_t mode)
     HANDLE h;
     DWORD access = GENERIC_READ;
     int acc_mode = flag & O_ACCMODE;
-    DWORD dispos = OPEN_ALWAYS;
+    DWORD dispos = OPEN_EXISTING;
 
     access |= (acc_mode & O_RDONLY) ? GENERIC_READ : 0;
     access |= (acc_mode & O_WRONLY || acc_mode & O_RDWR) ? GENERIC_WRITE : 0;
@@ -26,6 +26,9 @@ memmap_fd_t memmap_open(const char *filename, int flag, mode_t mode)
 
     h = CreateFile(filename, access, FILE_SHARE_READ, NULL, dispos, 
             FILE_ATTRIBUTE_NORMAL, NULL);
+    if (h == INVALID_HANDLE_VALUE) {
+        return (memmap_fd_t)(-1);
+    }
 
     (void)mode;
 
@@ -142,4 +145,3 @@ size_t memmap_get_file_size(memmap_fd_t fd)
 }
 
 #endif
-

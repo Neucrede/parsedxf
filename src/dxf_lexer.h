@@ -86,6 +86,7 @@ struct dxf_group_code_desc {
 
 struct dxf_token {
     int tag;
+    unsigned int group_code;
     union {
         char *str;
         int i;
@@ -97,6 +98,7 @@ struct dxf_token {
 struct dxf_lexer_desc {
     char *buf;
     char *cur;
+    char *last;
     char *end;
     memmap_fd_t fd;
     int err;
@@ -119,6 +121,7 @@ int dxf_lexer_open_desc(struct dxf_lexer_desc* const desc, const char *filename,
                         struct crapool_desc* const pool);
 int dxf_lexer_close_desc(struct dxf_lexer_desc* const desc, int destroy_pool);
 int dxf_lexer_get_token(struct dxf_lexer_desc* const desc);
+int dxf_lexer_unget_token(struct dxf_lexer_desc* const desc);
 
 #ifdef __cplusplus
 }

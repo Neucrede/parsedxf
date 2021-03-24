@@ -14,7 +14,7 @@
 #define HASHTABLE_COPY_VALUE 0
 #define HASHTABLE_COPY_MEMORY 1
 
-typedef unsigned int (*pfn_hash_t)(const void*);
+typedef unsigned int (*pfn_hash_t)(const void* const);
 typedef int (*pfn_keycmp_t)(const void** const, const void** const);
 
 struct hashtable_entry;
@@ -50,16 +50,26 @@ struct hashtable {
     pfn_hash_t hash_fcn;
     pfn_keycmp_t keycmp_fcn;
     
-#ifdef USE_PTHREAD
+#if defined(USE_PTHREAD) && defined(CRAPOOL_LOCK_ENABLED)
+#if (CRAPOOL_LOCK_ENABLED == 1)
     pthread_rwlock_t rwlock;
 #endif
+#endif
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int hashtable_create(struct hashtable* const hashtab, size_t len, float load_factor, 
                     size_t pool_size, pfn_hash_t hash_fcn, pfn_keycmp_t keycmp_fcn);
 int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode, size_t key_size,
                     void *value, int value_copy_mode, int value_size);
-const void* const hashtable_get(struct hashtable* const hashtab, void *key);
+const void* hashtable_get(struct hashtable* const hashtab, void *key);
 int hashtable_destroy(struct hashtable* const hashtab);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __HASHTAB_H__ */

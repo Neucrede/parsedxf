@@ -2,18 +2,27 @@
 #include <string.h>
 #include "hashtab.h"
 
-unsigned int str_hash(const char *sz) {
+unsigned int str_hash(const char **psz) {
     unsigned int hash = 0;
+    const char *sz = *psz;
     
     while (*sz != '\0') {
         hash = *(sz++) + (hash << 5) - 1;
     }
     
-    return 999;
+    return hash;
 }
 
 int str_cmp(const char **psz1, const char **psz2) {
     return strcmp(*psz1, *psz2);
+}
+
+unsigned int int_hash(const int *i) {
+    return (unsigned int)i;
+}
+
+int int_cmp(const int *i, const int *j) {
+    
 }
 
 int main(int argc, char* argv[])
@@ -35,12 +44,12 @@ int main(int argc, char* argv[])
                     sz1, HASHTABLE_COPY_MEMORY, strlen(sz1) + 1);
     hashtable_put(&hashtab, &key2, HASHTABLE_COPY_VALUE, sizeof(key2),
                     &sz2, HASHTABLE_COPY_VALUE, sizeof(sz2));
-    hashtable_put(&hashtab, &key3, HASHTABLE_COPY_VALUE, sizeof(key3),
+    hashtable_put(&hashtab, &key3, HASHTABLE_COPY_VALUE, 9999,
                     sz3, HASHTABLE_COPY_MEMORY, strlen(sz3) + 1);
     
-    printf("%s \n", *(char**)hashtable_get(&hashtab, key1));
-    printf("%s \n", *(char**)hashtable_get(&hashtab, key2));
-    printf("%s \n", *(char**)hashtable_get(&hashtab, key3));
+    printf("%s \n", *(char**)hashtable_get(&hashtab, &key1));
+    printf("%s \n", *(char**)hashtable_get(&hashtab, &key2));
+    printf("%s \n", *(char**)hashtable_get(&hashtab, &key3));
     
     return 0;
 }

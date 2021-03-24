@@ -25,8 +25,17 @@ struct crapool_desc {
 #endif
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct crapool_desc* crapool_create(size_t size, void* const mutex);
 void* crapool_alloc(struct crapool_desc* const desc, size_t size);
+void* crapool_calloc(struct crapool_desc* const desc, size_t count, size_t elmsize);
 int crapool_destroy(struct crapool_desc* const desc);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CRAPOOL_H__ */
