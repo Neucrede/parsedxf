@@ -244,7 +244,7 @@ static int get_line(struct dxf_lexer_desc* const desc)
     } while ((desc->cur <= end) && (i < DXF_LEXER_MAX_LINE_LENGTH));
 
     desc->line_buf[i] = '\0';
-    dbgprint("dxf_lexer: Current line is \n%s \n", desc->line_buf);
+    dbgprint("\ndxf_lexer: Current line is \n%s \n", desc->line_buf);
     
     /* Skip remaining text in this line if any. */
     next_line(desc);
@@ -321,6 +321,7 @@ static int scan_string(struct dxf_lexer_desc* const desc, char **buf)
         return -1;
     }
     
+    /*
     if ((desc->token.value.str = (char*)crapool_alloc(desc->pool, len + 1)) == NULL) {
         return -1;
     }
@@ -329,6 +330,9 @@ static int scan_string(struct dxf_lexer_desc* const desc, char **buf)
     if (buf != NULL) {
         memcpy(*buf, desc->line_buf, len + 1);
     }
+    */
+    
+    desc->token.value.str = desc->line_buf;
     
     return 0;
 }
@@ -440,7 +444,7 @@ int dxf_lexer_get_token(struct dxf_lexer_desc* const desc)
     desc->token.group_code = grp_code;
     retval = grp_code_desc->scanner(desc, NULL);
     
-    dbgprint("dxf_lexer: Current token tag=%d, group_code=%d, value=@0x%x \n",
+    dbgprint("\ndxf_lexer: Current token tag=%d, group_code=%d, value=@0x%x \n",
             desc->token.tag, desc->token.group_code, &(desc->token.value));
             
     return retval;
@@ -453,6 +457,6 @@ int dxf_lexer_unget_token(struct dxf_lexer_desc* const desc)
     }
     
     desc->cur = desc->prev;
-    memcpy(&(desc->token), &dxf_invalid_token, sizeof(struct dxf_token));
+    desc->token.tag = DXF_INVALID_TAG;
     return 0;
 }

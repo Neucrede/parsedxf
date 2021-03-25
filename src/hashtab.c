@@ -56,7 +56,7 @@ static int put_value(struct crapool_desc* const pool, struct hashtable_entry* co
     switch (value_copy_mode) {
         case HASHTABLE_COPY_VALUE:
             if (value_size > sizeof(entry->value)) {
-                dbgprint("hashtab: Value with value_size=%u is too large to fit into union entry->value. " \
+                dbgprint("\nhashtab: Value with value_size=%u is too large to fit into union entry->value. " \
                         "Will be truncated to %u. \n", 
                         value_size, sizeof(entry->value));
                 value_size = sizeof(entry->value);
@@ -65,7 +65,7 @@ static int put_value(struct crapool_desc* const pool, struct hashtable_entry* co
             return 0;
         case HASHTABLE_COPY_MEMORY:
             if ((value_buf = crapool_alloc(pool, value_size)) == NULL) {
-                dbgprint("hashtab: Allocate from pool failed, space required %u (bytes).\n", value_size);
+                dbgprint("\nhashtab: Allocate from pool failed, space required %u (bytes).\n", value_size);
                 return -1;
             }
             memcpy(value_buf, value, value_size);
@@ -108,12 +108,12 @@ int hashtable_create(struct hashtable* const hashtab, size_t len, float load_fac
     if ((hashtab->table = 
         (struct hashtable_entry**)calloc(len, sizeof(struct hashtable_entry*))) == NULL) 
     {
-        dbgprint("hashtab: Failed to allocate space for table entries. \n");
+        dbgprint("\nhashtab: Failed to allocate space for table entries. \n");
         return -1;
     }
     
     if ((hashtab->pool = crapool_create(pool_size, NULL)) == NULL) {
-        dbgprint("hashtab: Failed to create mempool. \n");
+        dbgprint("\nhashtab: Failed to create mempool. \n");
         return -1;
     }
     
@@ -123,7 +123,7 @@ int hashtable_create(struct hashtable* const hashtab, size_t len, float load_fac
     hashtab->hash_fcn = hash_fcn;
     hashtab->keycmp_fcn = keycmp_fcn;
     
-    dbgprint("hashtab: Created hash table @0x%x, len=%u, inflate_threshold=%u, pool=@0x%x, " \
+    dbgprint("\nhashtab: Created hash table @0x%x, len=%u, inflate_threshold=%u, pool=@0x%x, " \
                 "table=@0x%x, hash_fcn=@0x%x, keycmp_fcn=@0x%x. \n",
                 hashtab, hashtab->len, hashtab->inflate_threshold, hashtab->pool,
                 hashtab->table, hashtab->hash_fcn, hashtab->keycmp_fcn);
@@ -142,7 +142,7 @@ int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode,
     struct hashtable_entry* entry;
     void *key_buf;
     
-    dbgprint("hashtab: Put into hashtable @0x%x, key=@0x%x, key_copy_mode=%d, key_size=%u, " \
+    dbgprint("\nhashtab: Put into hashtable @0x%x, key=@0x%x, key_copy_mode=%d, key_size=%u, " \
                 "value=@0x%x, value_copy_mode=%d, value_size=%u. \n",
                 hashtab, key, key_copy_mode, key_size, value, value_copy_mode, value_size);
     
@@ -157,10 +157,10 @@ int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode,
     slot = hash % len;
     
     for (entry = hashtab->table[slot]; entry != NULL; entry = entry->next) {
-        dbgprint("hashtab: Examing entry @0x%x, hash=0x%x. \n", entry, hash);
+        dbgprint("\nhashtab: Examing entry @0x%x, hash=0x%x. \n", entry, hash);
         if (entry->hash == hash) {
             if (hashtab->keycmp_fcn((const void** const)key, (const void ** const)(&(entry->key))) == 0) {
-                dbgprint("hashtab: Key comparison succeeded. Put value into entry @0x%x, hash=0x%x. \n", entry, hash);
+                dbgprint("\nhashtab: Key comparison succeeded. Put value into entry @0x%x, hash=0x%x. \n", entry, hash);
                 retval = put_value(hashtab->pool, entry, value, value_copy_mode, value_size);
                 goto hashtable_put_ret;
             }
@@ -176,17 +176,17 @@ int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode,
         slot = hash % len;
     }
     
-    dbgprint("hashtab: Create new entry for hash table @0x%x. \n", hashtab);
+    dbgprint("\nhashtab: Create new entry for hash table @0x%x. \n", hashtab);
     if ((entry = (struct hashtable_entry*)crapool_alloc(hashtab->pool, sizeof(struct hashtable_entry))) == NULL) {
-        dbgprint("hashtab: Failed to allocate space for new entry. \n");
+        dbgprint("\nhashtab: Failed to allocate space for new entry. \n");
         goto hashtable_put_fail;
     }
     
-    dbgprint("hashtab: Put key into new entry @0x%x, hash=0x%x. \n", entry, hash);
+    dbgprint("\nhashtab: Put key into new entry @0x%x, hash=0x%x. \n", entry, hash);
     switch (key_copy_mode) {
         case HASHTABLE_COPY_VALUE:
             if (key_size > sizeof(entry->key)) {
-                dbgprint("hashtab: A key with key_size=%u is too large to fit into union entry->key. " \
+                dbgprint("\nhashtab: A key with key_size=%u is too large to fit into union entry->key. " \
                         "Will be truncated to %u. \n", 
                         key_size, sizeof(entry->key));
                 key_size = sizeof(entry->key);
@@ -204,12 +204,12 @@ int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode,
             goto hashtable_put_fail;
     }
     
-    dbgprint("hashtab: Put value into new entry @0x%x. \n", entry);
+    dbgprint("\nhashtab: Put value into new entry @0x%x. \n", entry);
     if (put_value(hashtab->pool, entry, value, value_copy_mode, value_size) != 0) {
         goto hashtable_put_fail;
     }
     
-    dbgprint("hashtab: Adjust entry table. \n");
+    dbgprint("\nhashtab: Adjust entry table. \n");
     entry->hash = hash;
     entry->next = hashtab->table[slot];
     hashtab->table[slot] = entry;
@@ -217,7 +217,7 @@ int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode,
     goto hashtable_put_ret;
     
 hashtable_put_fail:
-    dbgprint("hashtab: hashtable_put() failed. \n");
+    dbgprint("\nhashtab: hashtable_put() failed. \n");
     retval = -1;
 hashtable_put_ret:
 #if defined(USE_PTHREAD) && defined(HASHTAB_RWLOCK_ENABLED)
@@ -235,7 +235,7 @@ const void* hashtable_get(struct hashtable* const hashtab, void *key)
     unsigned int slot;
     struct hashtable_entry* entry;
     
-    dbgprint("hashtab: Get from hashtable @0x%x, key=@0x%x. \n", hashtab, key);
+    dbgprint("\nhashtab: Get from hashtable @0x%x, key=@0x%x. \n", hashtab, key);
     
 #if defined(USE_PTHREAD) && defined(HASHTAB_RWLOCK_ENABLED)
 #if (HASHTAB_RWLOCK_ENABLED == 1)
@@ -248,7 +248,7 @@ const void* hashtable_get(struct hashtable* const hashtab, void *key)
     slot = hash % len;
     
     for (entry = hashtab->table[slot]; entry != NULL; entry = entry->next) {
-        dbgprint("hashtab: Examing entry @0x%x, hash=0x%x. \n", entry, hash);
+        dbgprint("\nhashtab: Examing entry @0x%x, hash=0x%x. \n", entry, hash);
         if (entry->hash == hash) {
             if (hashtab->keycmp_fcn((const void ** const)key, (const void ** const)(&(entry->key))) == 0) {
 #if defined(USE_PTHREAD) && defined(HASHTAB_RWLOCK_ENABLED)
@@ -256,7 +256,7 @@ const void* hashtable_get(struct hashtable* const hashtab, void *key)
                 pthread_rwlock_unlock(hashtab->rwlock);
 #endif
 #endif
-                dbgprint("hashtab: Returning entry @0x%x. \n", entry);
+                dbgprint("\nhashtab: Returning entry @0x%x. \n", entry);
                 return (const void*)(&(entry->value));
             }
         }
