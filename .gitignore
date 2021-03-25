@@ -51,6 +51,21 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# autotool generated files
+Makefile
+Makefile.in
+/aclocal.m4
+/autom4te.cache
+/build-aux
+/config.*
+/configure
+/configure.scan
+/depcomp
+/install-sh
+/libtool
+/ltmain.sh
+/missing
+
 *.sdf
 *.opensdf
 *.suo
@@ -67,6 +82,7 @@ dkms.conf
 *~
 
 *.log
+*.old
 
 Thumbs.db
 
