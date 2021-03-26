@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\test_memmap.c">
+    <ClCompile Include="..\..\test\test_memmap.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

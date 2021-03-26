@@ -5,8 +5,10 @@
 
 static unsigned int str_hash(const char **psz);
 static int str_cmp(const char **psz1, const char **psz2);
+static int init_entity(struct dxf_entity* const entity);
 
-static unsigned int str_hash(const char **psz) {
+static unsigned int str_hash(const char **psz) 
+{
     unsigned int hash = 0;
     const char *sz = *psz;
     
@@ -17,8 +19,38 @@ static unsigned int str_hash(const char **psz) {
     return hash;
 }
 
-static int str_cmp(const char **psz1, const char **psz2) {
+static int str_cmp(const char **psz1, const char **psz2) 
+{
     return strcmp(*psz1, *psz2);
+}
+
+static int init_entity(struct dxf_entity* const entity)
+{
+    struct dxf_point *point = (struct dxf_point*)entity;
+    struct dxf_line *line = (struct dxf_line*)entity;
+    struct dxf_circle *circle = (struct dxf_circle*)entity;
+    struct dxf_lwpolyline *lwpolyline = (struct dxf_lwpolyline*)entity;
+
+    switch (entity->type) {
+        case DXF_POINT:
+            point->x = point->y = point->z = 0.0;
+            return 0;
+        case DXF_LINE:
+            line->x1 = line->x2 = line->y1 = line->y2 =
+                line->z1 = line->z2 = 0.0;
+            return 0;
+        case DXF_CIRCLE:
+            circle->x = circle->y = circle->z = circle->r = 0.0;
+            return 0;
+        case DXF_LWPOLYLINE:
+            lwpolyline->closed = 0;
+            lwpolyline->number_of_vertices = 0;
+            lwpolyline->vertices = NULL;
+            lwpolyline->tail_vertex = NULL;
+            return 0;
+        default:
+            return -1;
+    }
 }
 
 int dxf_init(struct dxf* const dxf, size_t pool_size)
@@ -167,6 +199,9 @@ struct dxf_entity* dxf_alloc_entity(struct dxf* const dxf, int entity_type)
         case DXF_CIRCLE:
             size = sizeof(struct dxf_circle);
             break;
+        case DXF_LWPOLYLINE:
+            size = sizeof(struct dxf_lwpolyline);
+            break;
         default:
             dbgprint("\ndxf: Could not allocate space for entity type %d. \n", entity_type);
             return NULL;
@@ -176,6 +211,7 @@ struct dxf_entity* dxf_alloc_entity(struct dxf* const dxf, int entity_type)
         *((int*)(&(entity->type))) = entity_type;
         *((size_t*)(&(entity->size))) = size;
         entity->block_ref = NULL;
+        init_entity(entity);
     }
     
     dbgprint("\ndxf: Allocated space for new entity @0x%x, type=%d, size=%u. \n",

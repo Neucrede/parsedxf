@@ -90,7 +90,7 @@ struct dxf_token {
     union {
         char *str;
         int i;
-        float f;
+        double f;
         void *bin;
     } value;
 };

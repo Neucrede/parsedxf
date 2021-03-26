@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\test_dxf_lexer.c">
+    <ClCompile Include="..\..\test\test_dxf_lexer.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

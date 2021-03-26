@@ -15,15 +15,13 @@ int main(int argc, char *argv[])
     dxf_add_layer(&dxf, "Layer1");
     dxf_add_layer(&dxf, "Layer2");
 
-    entity = (struct dxf_entity*)dxf_pool_alloc(&dxf, sizeof(struct dxf_point));
-    entity->type = 0;
+    entity = dxf_alloc_entity(&dxf, DXF_POINT);
     ((struct dxf_point*)entity)->x = 1.0f;
     ((struct dxf_point*)entity)->y = 2.0f;
     ((struct dxf_point*)entity)->z = 3.0f;
     dxf_add_entity(&dxf, "Layer1", entity);
 
-    entity = (struct dxf_entity*)dxf_pool_alloc(&dxf, sizeof(struct dxf_line));
-    entity->type = 0;
+    entity = dxf_alloc_entity(&dxf, DXF_LINE);
     ((struct dxf_line*)entity)->x1 = 1.0f;
     ((struct dxf_line*)entity)->y1 = 2.0f;
     ((struct dxf_line*)entity)->z1 = 3.0f;

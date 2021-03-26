@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\test_hashtab.c">
+    <ClCompile Include="..\..\test\test_hashtab.c">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

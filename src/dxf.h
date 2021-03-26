@@ -25,14 +25,20 @@
 #define DXF_ENTITY_TYPES_COUNT (DXF_ENTITY_TYPE_END + 1)
 
 struct dxf_layer;
-struct dxf_entity;
-struct dxf_block;
-
 struct dxf {
     struct hashtable header;
     struct dxf_layer *layers;
     struct dxf_layer *last_accessed_layer;
     struct crapool_desc *pool;
+};
+
+struct dxf_lwpolyline_vertex;
+struct dxf_lwpolyline_vertex {
+    double x;
+    double y;
+    double z;
+    double bulge;
+    struct dxf_lwpolyline_vertex *next;
 };
 
 struct dxf_layer {
@@ -41,6 +47,9 @@ struct dxf_layer {
     struct dxf_layer *next;
 };
 
+struct dxf_block;
+
+struct dxf_entity;
 struct dxf_entity {
     const size_t size;
     const int type;
@@ -51,36 +60,44 @@ struct dxf_entity {
 
 struct dxf_point {
     struct dxf_entity header;
-    float x;
-    float y;
-    float z;
+    double x;
+    double y;
+    double z;
 };
 
 struct dxf_vertex;
 struct dxf_vertex {
     struct dxf_entity header;
-    float x;
-    float y;
-    float z;
+    double x;
+    double y;
+    double z;
     struct dxf_vertex *next;
 };
 
 struct dxf_line {
     struct dxf_entity header;
-    float x1;
-    float y1;
-    float z1;
-    float x2;
-    float y2;
-    float z2;
+    double x1;
+    double y1;
+    double z1;
+    double x2;
+    double y2;
+    double z2;
 };
 
 struct dxf_circle {
     struct dxf_entity header;
-    float x;
-    float y;
-    float z;
-    float r;
+    double x;
+    double y;
+    double z;
+    double r;
+};
+
+struct dxf_lwpolyline {
+    struct dxf_entity header;
+    size_t number_of_vertices;
+    int closed;
+    struct dxf_lwpolyline_vertex *vertices;
+    struct dxf_lwpolyline_vertex *tail_vertex;
 };
 
 #ifdef __cplusplus

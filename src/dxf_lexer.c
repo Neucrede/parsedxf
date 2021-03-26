@@ -27,7 +27,7 @@ static int skip_blanks(struct dxf_lexer_desc* const desc);
 static int get_line(struct dxf_lexer_desc* const desc);
 static int next_line(struct dxf_lexer_desc* const desc);
 static int scan_integer(struct dxf_lexer_desc* const desc, int *pi);
-static int scan_float(struct dxf_lexer_desc* const desc, float *pf);
+static int scan_float(struct dxf_lexer_desc* const desc, double *pf);
 static int scan_string(struct dxf_lexer_desc* const desc, char **buf);
 static int scan_binary(struct dxf_lexer_desc* const desc, void **buf);
 
@@ -295,15 +295,15 @@ static int scan_integer(struct dxf_lexer_desc* const desc, int *pi)
     return 0;
 }
 
-static int scan_float(struct dxf_lexer_desc* const desc, float *pf)
+static int scan_float(struct dxf_lexer_desc* const desc, double *pf)
 {
-    float f;
+    double f;
     
     if (get_line(desc) == -1) {
         return -1;
     }
     
-    f = strtof(desc->line_buf, NULL);
+    f = strtod(desc->line_buf, NULL);
     desc->token.value.f = f;
     
     if (pf != NULL) {
