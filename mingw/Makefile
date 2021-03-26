@@ -1,4 +1,4 @@
-OUT = libparsedxf.so
+OUT = libparsedxf.dll
 OUTA = libparsedxf.a
 OUTDIR = ./out
 OBJDIR = ./obj
@@ -9,7 +9,7 @@ SOURCES = $(wildcard $(SRCDIR)/*.c)
 OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.c, %.o, $(notdir $(SOURCES))))
 DEPS = $(addprefix $(DEPDIR)/, $(patsubst %.c, %.d, $(notdir $(SOURCES))))
 CC = gcc
-CCFLAGS = -O2 -Wall -fPIC -DUSE_PTHREAD $(SRCDIR)
+CCFLAGS = -O2 -Wall -fPIC $(INCDIRS)
 LDFLAGS = --shared
 AR = ar
 ARFLAGS = rsv

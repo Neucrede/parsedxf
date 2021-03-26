@@ -109,7 +109,7 @@ const struct dxf_group_code_desc dxf_group_code_descs[] = {
     { DXF_INVALID_TAG, NULL, -1, -1, (pfn_scanner_t)scan_string }
 };
 
-const struct dxf_token dxf_invalid_token = { DXF_INVALID_TAG, -1, NULL };
+const struct dxf_token dxf_invalid_token = { DXF_INVALID_TAG, -1, { NULL }};
 
 static int xlat_tab_init()
 {
@@ -142,7 +142,7 @@ static int xlat_tab_init()
         if ((desc = xlat_tab_get(grp_code)) != &dxf_invalid_desc) {
             printf("grp_code %d: tag=%d, name=%s, start=%d, end=%d, scanner=@0x%x \n", 
                     grp_code, desc->tag, desc->name,
-                    desc->range_start, desc->range_end, desc->scanner);
+                    desc->range_start, desc->range_end, (unsigned int)(desc->scanner));
         }
     }
 #endif
@@ -445,7 +445,8 @@ int dxf_lexer_get_token(struct dxf_lexer_desc* const desc)
     retval = grp_code_desc->scanner(desc, NULL);
     
     dbgprint("\ndxf_lexer: Current token tag=%d, group_code=%d, value=@0x%x \n",
-            desc->token.tag, desc->token.group_code, &(desc->token.value));
+            desc->token.tag, desc->token.group_code, 
+            (unsigned int)(&(desc->token.value)));
             
     return retval;
 }
@@ -458,5 +459,6 @@ int dxf_lexer_unget_token(struct dxf_lexer_desc* const desc)
     
     desc->cur = desc->prev;
     desc->token.tag = DXF_INVALID_TAG;
+    dbgprint("\ndxf_lexer: Unget token. \n");
     return 0;
 }

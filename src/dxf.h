@@ -19,8 +19,9 @@
 #define DXF_HATCH 11
 #define DXF_INSERT 12
 #define DXF_TEXTSTRING 13
-#define DXF_SOLID 14
-#define DXF_ENTITY_TYPE_END 14
+#define DXF_MTEXT 14
+#define DXF_SOLID 15
+#define DXF_ENTITY_TYPE_END 15
 #define DXF_ENTITY_TYPES_COUNT (DXF_ENTITY_TYPE_END + 1)
 
 struct dxf_layer;
@@ -72,6 +73,14 @@ struct dxf_line {
     float x2;
     float y2;
     float z2;
+};
+
+struct dxf_circle {
+    struct dxf_entity header;
+    float x;
+    float y;
+    float z;
+    float r;
 };
 
 #ifdef __cplusplus

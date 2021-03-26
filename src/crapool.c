@@ -43,7 +43,7 @@ struct crapool_desc* crapool_create(size_t size, void* const mutex)
     }
     
     alloc_size = 
-        (size + sizeof(struct crapool_desc)) | (CRAPOOL_SIZE_MULTIPLE - 1) + 1;
+        ((size + sizeof(struct crapool_desc)) | (CRAPOOL_SIZE_MULTIPLE - 1)) + 1;
 
     if ((desc = (struct crapool_desc*)malloc(alloc_size)) == NULL) {
         return NULL;
@@ -59,7 +59,7 @@ struct crapool_desc* crapool_create(size_t size, void* const mutex)
 #if defined(USE_PTHREAD) && defined(CRAPOOL_LOCK_ENABLED)
 #if (CRAPOOL_LOCK_ENABLED == 1)
     if (mutex != NULL) {
-        dbgprint("\ncrapool: Copying mutex @0x%x.\n", mutex);
+        dbgprint("\ncrapool: Copying mutex @0x%x.\n", (unsigned int)mutex);
         desc->mutex = mutex;
     }
     else {
@@ -67,14 +67,14 @@ struct crapool_desc* crapool_create(size_t size, void* const mutex)
             free(desc);
             return NULL;
         }
-        dbgprint("\ncrapool: Created mutex @0x%x. \n", desc->mutex);
+        dbgprint("\ncrapool: Created mutex @0x%x. \n", (unsigned int)(desc->mutex));
         pthread_mutex_init(desc->mutex, NULL);
     }
 #endif
 #endif
     
     dbgprint("\ncrapool: New desc @0x%x: free_space=%d, next_free=@0x%x. \n",
-                desc, desc->free_space, desc->next_free);
+                (unsigned int)desc, desc->free_space, (unsigned int)(desc->next_free));
     
     return desc;
 }
@@ -88,7 +88,7 @@ static void adjust_head_allocable_desc(struct crapool_desc* const desc)
     {
         if (desc_avail->free_space > CRAPOOL_SKIP_EXAMING_SIZE_THRESHOLD) {
             dbgprint("\ncrapool: Set head_allocable_desc pointer to @0x%x for desc @0x%x. \n",
-                    desc_avail, desc);
+                    (unsigned int)desc_avail, (unsigned int)desc);
             desc->head_allocable_desc = desc_avail;
             break;
         }
@@ -113,9 +113,11 @@ void* crapool_alloc(struct crapool_desc* const desc, size_t size)
             dbgprint("\ncrapool: Traversing desc chain through @0x%x: " \
                         "free_space=%d, next_free=@0x%x, " \
                         "head_allocable_desc=@0x%x, next=@0x%x, tail=@0x%x. \n",
-                        curr_desc, curr_desc->free_space, curr_desc->next_free,
-                        curr_desc->head_allocable_desc, curr_desc->next, 
-                        curr_desc->tail);
+                        (unsigned int)curr_desc, curr_desc->free_space, 
+                        (unsigned int)(curr_desc->next_free),
+                        (unsigned int)(curr_desc->head_allocable_desc), 
+                        (unsigned int)(curr_desc->next), 
+                        (unsigned int)(curr_desc->tail));
 
             if (curr_desc->free_space >= size) {
                 curr_desc->free_space -= size;
@@ -123,7 +125,7 @@ void* crapool_alloc(struct crapool_desc* const desc, size_t size)
                 curr_desc->next_free += size;
                 adjust_head_allocable_desc(desc);
                 unlock_desc(desc);
-                dbgprint("\ncrapool: Returning allocated space @0x%x. \n", space);
+                dbgprint("\ncrapool: Returning allocated space @0x%x. \n", (unsigned int)space);
                 return space;
             }
 
@@ -145,14 +147,14 @@ void* crapool_alloc(struct crapool_desc* const desc, size_t size)
     }
     
     dbgprint("\ncrapool: Setting next pointer to @0x%x for desc @0x%x. \n",
-                desc_avail, desc->tail);
+                (unsigned int)desc_avail, (unsigned int)(desc->tail));
     desc->tail->next = desc_avail;
 
     for (curr_desc = desc; curr_desc->next != NULL; 
             curr_desc = curr_desc->next) 
     {
         dbgprint("\ncrapool: Setting tail pointer to @0x%x for desc @0x%x. \n",
-                    desc_avail, curr_desc);
+                    (unsigned int)desc_avail, (unsigned int)curr_desc);
         curr_desc->tail = desc_avail;
     }
 
@@ -160,7 +162,7 @@ void* crapool_alloc(struct crapool_desc* const desc, size_t size)
     adjust_head_allocable_desc(desc);
     unlock_desc(desc);
 
-    dbgprint("\ncrapool: Returning allocated space @0x%x. \n", space);
+    dbgprint("\ncrapool: Returning allocated space @0x%x. \n", (unsigned int)space);
     return space;
 }
 
@@ -194,7 +196,10 @@ int crapool_destroy(struct crapool_desc* const desc)
     do {
         dbgprint("\ncrapool: Destroying desc @0x%x: free_space=%d, next_free=@0x%x," \
                     "next=@0x%x, tail=@0x%x. \n",
-                    curr, curr->free_space, curr->next_free, curr->next, curr->tail);
+                    (unsigned int)curr, curr->free_space,
+                    (unsigned int)(curr->next_free), 
+                    (unsigned int)(curr->next), 
+                    (unsigned int)(curr->tail));
         next = curr->next;
         free(curr);
         curr = next;

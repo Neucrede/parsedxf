@@ -20,6 +20,11 @@ int main(int argc, char *argv[])
         return 1;
     }
     
+    if (dxf_init(&dxf, 0) != 0) {
+        printf("Failed to initialize dxf struct.\n");
+        return 1;
+    }
+    
     dxf_parser_init();
     dxf_parser_init_desc(&parser_desc, &lexer_desc, &dxf);
     dxf_parser_parse(&parser_desc);
@@ -28,4 +33,3 @@ int main(int argc, char *argv[])
     
     return 0;
 }
-

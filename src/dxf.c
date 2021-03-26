@@ -43,7 +43,7 @@ int dxf_init(struct dxf* const dxf, size_t pool_size)
     }
     
     dbgprint("\ndxf: Initialized dxf struct @0x%x, pool_size=%u. \n",
-            dxf, pool_size);
+            (unsigned int)dxf, pool_size);
     
     return 0;
 }
@@ -77,7 +77,8 @@ struct dxf_layer* dxf_add_layer(struct dxf* const dxf, const char *name)
     dxf->last_accessed_layer = layer;
     
     dbgprint("\ndxf: Added layer @0x%x, name=%s, entities=@0x%x, next=@0x%x \n",
-            layer, layer->name, layer->entities, layer->next);
+            (unsigned int)layer, layer->name, (unsigned int)(layer->entities), 
+            (unsigned int)(layer->next));
     
     return layer;
 }
@@ -89,7 +90,8 @@ struct dxf_layer* dxf_get_layer(struct dxf* const dxf, const char *name)
     if (strcmp(dxf->last_accessed_layer->name, name) == 0) {
         layer = dxf->last_accessed_layer;
         dbgprint("\ndxf: Layer found (fast fetch) @0x%x, name=%s, entities=@0x%x, next=@0x%x \n",
-            layer, layer->name, layer->entities, layer->next);
+            (unsigned int)layer, layer->name, 
+            (unsigned int)(layer->entities), (unsigned int)(layer->next));
         return layer;
     }
 
@@ -97,7 +99,8 @@ struct dxf_layer* dxf_get_layer(struct dxf* const dxf, const char *name)
         if (strcmp(layer->name, name) == 0) {
             dxf->last_accessed_layer = layer;
             dbgprint("\ndxf: Layer found @0x%x, name=%s, entities=@0x%x, next=@0x%x \n",
-                    layer, layer->name, layer->entities, layer->next);
+                    (unsigned int)layer, layer->name, 
+                    (unsigned int)(layer->entities), (unsigned int)(layer->next));
             return layer;
         }
     }
@@ -134,7 +137,7 @@ int dxf_add_entity(struct dxf* const dxf, const char* layer_name,
     layer->entities[type] = entity;
     
     dbgprint("\ndxf: Added entity @0x%x (type=%d) to layer @0x%x (name=%s). \n",
-                entity, type, layer, layer->name);
+                (unsigned int)entity, type, (unsigned int)layer, layer->name);
 
     return 0;
 }
@@ -161,6 +164,9 @@ struct dxf_entity* dxf_alloc_entity(struct dxf* const dxf, int entity_type)
         case DXF_LINE:
             size = sizeof(struct dxf_line);
             break;
+        case DXF_CIRCLE:
+            size = sizeof(struct dxf_circle);
+            break;
         default:
             dbgprint("\ndxf: Could not allocate space for entity type %d. \n", entity_type);
             return NULL;
@@ -173,6 +179,6 @@ struct dxf_entity* dxf_alloc_entity(struct dxf* const dxf, int entity_type)
     }
     
     dbgprint("\ndxf: Allocated space for new entity @0x%x, type=%d, size=%u. \n",
-                entity, entity_type, entity->size);
+                (unsigned int)entity, entity_type, entity->size);
     return entity;
 }

@@ -58,7 +58,10 @@ dkms.conf
 *Release/
 
 /mingw/obj/*
-/mingw/dep/*
+/mingw/deps/*
+
+/gnu/obj/*
+/gnu/deps/*
 
 /doc/html
 
