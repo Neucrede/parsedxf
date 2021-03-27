@@ -54,6 +54,7 @@ dkms.conf
 *.sdf
 *.opensdf
 *.suo
+*.user
 *Debug/
 *Release/
 

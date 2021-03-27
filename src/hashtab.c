@@ -231,7 +231,7 @@ hashtable_put_ret:
     return retval;
 }
 
-const void* hashtable_get(struct hashtable* const hashtab, void *key)
+void* hashtable_get(struct hashtable* const hashtab, void *key)
 {
     size_t len;
     unsigned int hash;
@@ -261,7 +261,7 @@ const void* hashtable_get(struct hashtable* const hashtab, void *key)
 #endif
 #endif
                 dbgprint("\nhashtab: Returning entry @0x%x. \n", (unsigned int)entry);
-                return (const void*)(&(entry->value));
+                return &(entry->value);
             }
         }
     }

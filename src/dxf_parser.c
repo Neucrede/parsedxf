@@ -2,13 +2,48 @@
 #include <string.h>
 #include <stdio.h>
 #include "dxf_parser.h"
+#include "hashtab.h"
 #include "dbgprint.h"
 
+typedef int(*pfn_entity_parser_t)(struct dxf_parser_desc* const);
+
+static const char *str_point = "POINT";
+static const char *str_line = "LINE";
+static const char *str_circle = "CIRCLE";
+static const char *str_lwpolyline = "LWPOLYLINE";
+
+static struct hashtable entity_parsers;
+
+static unsigned int str_hash(const char **psz);
+static int str_cmp(const char **psz1, const char **psz2);
+static int register_entity_parser(const char **entity_name, pfn_entity_parser_t parser);
 static int skip_until_lexer_tag(struct dxf_lexer_desc* const lexer_desc, int tag_expected);
+static int dummy_parser_hook(struct dxf_entity* entity);
 static int parse_point(struct dxf_parser_desc* const parser_desc);
 static int parse_line(struct dxf_parser_desc* const parser_desc);
 static int parse_circle(struct dxf_parser_desc* const parser_desc);
 static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc);
+
+static unsigned int str_hash(const char **psz) {
+    unsigned int hash = 0;
+    const char *sz = *psz;
+
+    while (*sz != '\0') {
+        hash = *(sz++) + (hash << 5) - 1;
+    }
+
+    return hash;
+}
+
+static int str_cmp(const char **psz1, const char **psz2) {
+    return strcmp(*psz1, *psz2);
+}
+
+static int register_entity_parser(const char **entity_name, pfn_entity_parser_t parser)
+{
+    return hashtable_put(&entity_parsers, (void*)entity_name, HASHTABLE_COPY_VALUE, sizeof(char*),
+        &parser, HASHTABLE_COPY_VALUE, sizeof(pfn_entity_parser_t));
+}
 
 static int skip_until_lexer_tag(struct dxf_lexer_desc* const lexer_desc, int tag_expected)
 {
@@ -19,6 +54,12 @@ static int skip_until_lexer_tag(struct dxf_lexer_desc* const lexer_desc, int tag
     }
     
     return -1;
+}
+
+static int dummy_parser_hook(struct dxf_entity* entity)
+{
+    (void)entity;
+    return 0;
 }
 
 static int parse_point(struct dxf_parser_desc* const parser_desc)
@@ -39,6 +80,7 @@ static int parse_point(struct dxf_parser_desc* const parser_desc)
             case DXF_ENTITY_TYPE:
                 dxf_lexer_unget_token(lexer_desc);
                 dbgprint("\ndxf_parser: End of point entity. \n");
+                parser_desc->entity_after_parse_hooks[DXF_POINT]((struct dxf_entity*)point);
                 return 0;
             case DXF_LAYER_NAME:
                 dbgprint("\nlayer=%s ", token->value.str);
@@ -61,7 +103,7 @@ static int parse_point(struct dxf_parser_desc* const parser_desc)
         }
     }
     
-    return 0;
+    return -1;
 }
 
 static int parse_line(struct dxf_parser_desc* const parser_desc)
@@ -82,6 +124,7 @@ static int parse_line(struct dxf_parser_desc* const parser_desc)
             case DXF_ENTITY_TYPE:
                 dxf_lexer_unget_token(lexer_desc);
                 dbgprint("\ndxf_parser: End of line entity. \n");
+                parser_desc->entity_after_parse_hooks[DXF_LINE]((struct dxf_entity*)line);
                 return 0;
             case DXF_LAYER_NAME:
                 dbgprint("\nlayer=%s ", token->value.str);
@@ -121,8 +164,8 @@ static int parse_line(struct dxf_parser_desc* const parser_desc)
                 break;
         }
     }
-    
-    return 0;
+
+    return -1;
 }
 
 static int parse_circle(struct dxf_parser_desc* const parser_desc)
@@ -144,6 +187,7 @@ static int parse_circle(struct dxf_parser_desc* const parser_desc)
             case DXF_ENTITY_TYPE:
                 dxf_lexer_unget_token(lexer_desc);
                 dbgprint("\ndxf_parser: End of circle entity. \n");
+                parser_desc->entity_after_parse_hooks[DXF_CIRCLE]((struct dxf_entity*)circle);
                 return 0;
             case DXF_LAYER_NAME:
                 dbgprint("\nlayer=%s ", token->value.str);
@@ -176,7 +220,7 @@ static int parse_circle(struct dxf_parser_desc* const parser_desc)
         }
     }
     
-    return 0;
+    return -1;
 }
 
 static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
@@ -202,10 +246,11 @@ static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
                 dxf_lexer_unget_token(lexer_desc);
                 dbgprint("\ndxf_parser: End of lwpolyline entity. \n");
                 if (number_of_vertices_read < number_of_vertices) {
-                    dbgprint("\ndxf_parser: WARNING Actual number of vertices read " \
+                    errprint("\ndxf_parser: WARNING Actual number of vertices read " \
                                 "is less than the number that it claims to have. \n");
                     lwpolyline->number_of_vertices = number_of_vertices_read;
                 }
+                parser_desc->entity_after_parse_hooks[DXF_LWPOLYLINE]((struct dxf_entity*)lwpolyline);
                 return 0;
             case DXF_LAYER_NAME:
                 dbgprint("\nlayer=%s ", token->value.str);
@@ -224,7 +269,7 @@ static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
                 }
                 break;
             case DXF_X:
-                if (number_of_vertices_read >= number_of_vertices) {
+                if (number_of_vertices_read > number_of_vertices) {
                     dbgprint("\nUnexpected token, skipping...");
                     break;
                 }
@@ -247,7 +292,7 @@ static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
                 ++number_of_vertices_read;
                 break;
             case DXF_Y:
-                if ((number_of_vertices_read >= number_of_vertices) || (vertex == NULL)) {
+                if ((number_of_vertices_read > number_of_vertices) || (vertex == NULL)) {
                     dbgprint("\nUnexpected token, skipping...");
                     break;
                 }
@@ -255,7 +300,7 @@ static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
                 vertex->y = token->value.f;
                 break;
             case DXF_Z:
-                if ((number_of_vertices_read >= number_of_vertices) || (vertex == NULL)) {
+                if ((number_of_vertices_read > number_of_vertices) || (vertex == NULL)) {
                     dbgprint("\nUnexpected token, skipping...");
                     break;
                 }
@@ -263,7 +308,7 @@ static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
                 vertex->z = token->value.f;
                 break;
             case DXF_FLOAT:
-                if ((number_of_vertices_read >= number_of_vertices) || (vertex == NULL)) {
+                if ((number_of_vertices_read > number_of_vertices) || (vertex == NULL)) {
                     dbgprint("\nUnexpected or unwanted token, skipping...");
                     break;
                 }
@@ -277,11 +322,21 @@ static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
         }
     }
     
-    return 0;
+    return -1;
 }
 
 int dxf_parser_init()
 {
+    if (hashtable_create(&entity_parsers, 0, 0, 0, (pfn_hash_t)str_hash, (pfn_keycmp_t)str_cmp) != 0) {
+        errprint("\ndxf_parser: hashtable_init() failed. \n");
+        return -1;
+    }
+
+    register_entity_parser(&str_point, parse_point);
+    register_entity_parser(&str_line, parse_line);
+    register_entity_parser(&str_circle, parse_circle);
+    register_entity_parser(&str_lwpolyline, parse_lwpolyline);
+
     return 0;
 }
 
@@ -289,15 +344,36 @@ int dxf_parser_init_desc(struct dxf_parser_desc* const parser_desc,
                         struct dxf_lexer_desc* const lexer_desc,
                         struct dxf* const dxf)
 {
+    int i;
+
     parser_desc->lexer_desc = lexer_desc;
     parser_desc->dxf = dxf;
+
+    for (i = 0; i < DXF_ENTITY_TYPES_COUNT; ++i) {
+        parser_desc->entity_after_parse_hooks[i] = dummy_parser_hook;
+    }
     
+    return 0;
+}
+
+int dxf_parser_set_entity_after_parse_hook(
+    struct dxf_parser_desc* const parser_desc,
+    int entity_type,
+    pfn_entity_after_parse_hook_t hook)
+{
+    if ((entity_type < DXF_ENTITY_TYPE_START) || (entity_type > DXF_ENTITY_TYPE_END)) {
+        return -1;
+    }
+
+    parser_desc->entity_after_parse_hooks[entity_type] = hook;
     return 0;
 }
 
 int dxf_parser_parse(struct dxf_parser_desc* const parser_desc)
 {
     struct dxf_lexer_desc* const lexer_desc = parser_desc->lexer_desc;
+    const pfn_entity_parser_t *pfn_entity_parser;
+    int entity_parser_return_value;
     
     while (skip_until_lexer_tag(lexer_desc, DXF_BLOCK_NAME) == 0) {
         if (strcmp(lexer_desc->token.value.str, "ENTITIES") == 0) {
@@ -307,23 +383,19 @@ int dxf_parser_parse(struct dxf_parser_desc* const parser_desc)
     
     while (dxf_lexer_get_token(lexer_desc) == 0) {
         if (lexer_desc->token.tag == DXF_ENTITY_TYPE) {
-            if (strcmp(lexer_desc->token.value.str, "ENDSEC") == 0) {
-                break;
-            }
-            else if (strcmp(lexer_desc->token.value.str, "POINT") == 0) {
-                parse_point(parser_desc);
-            }
-            else if (strcmp(lexer_desc->token.value.str, "LINE") == 0) {
-                parse_line(parser_desc);
-            }
-            else if (strcmp(lexer_desc->token.value.str, "CIRCLE") == 0) {
-                parse_circle(parser_desc);
-            }
-            else if (strcmp(lexer_desc->token.value.str, "LWPOLYLINE") == 0) {
-                parse_lwpolyline(parser_desc);
+            if ((pfn_entity_parser = hashtable_get(&entity_parsers, &(lexer_desc->token.value.str))) != NULL) {
+                if (*pfn_entity_parser != NULL) {
+                    entity_parser_return_value = (*pfn_entity_parser)(parser_desc);
+                }
             }
             else {
-                dbgprint("\ndxf_parser: Skipping entity type %s \n", lexer_desc->token.value.str);
+                errprint("\ndxf_parser: Skipping entity type %s \n", lexer_desc->token.value.str);
+                continue;
+            }
+
+            if (entity_parser_return_value != 0) {
+                errprint("\ndxf_parser: Stopped after an error occured when parsing an entity.");
+                return -1;
             }
         }
     }

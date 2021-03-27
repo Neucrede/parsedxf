@@ -15,4 +15,10 @@
     #define dbgprint(...)
 #endif
 
+#ifdef NO_ERRPRINT
+    #define errprint(sz, args...) (void)0
+#else
+    #define errprint(sz, ...) fprintf(stderr, sz, ##__VA_ARGS__)
+#endif
+
 #endif /* __DBGPRINT_H__ */

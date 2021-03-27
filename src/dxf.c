@@ -56,12 +56,12 @@ static int init_entity(struct dxf_entity* const entity)
 int dxf_init(struct dxf* const dxf, size_t pool_size)
 {
     if (hashtable_create(&(dxf->header), 37, 0, 0, (pfn_hash_t)str_hash, (pfn_keycmp_t)str_cmp) != 0) {
-        dbgprint("\ndxf: Failed to create header. \n");
+        errprint("\ndxf: Failed to create header. \n");
         return -1;
     }
     
     if ((dxf->pool = crapool_create(pool_size, NULL)) == NULL) {
-        dbgprint("\ndxf: Memory pool creation failed. \n");
+        errprint("\ndxf: Memory pool creation failed. \n");
         return -1;
     }
 
@@ -69,7 +69,7 @@ int dxf_init(struct dxf* const dxf, size_t pool_size)
     dxf->last_accessed_layer = NULL;
 
     if (dxf_add_layer(dxf, "0") == NULL) {
-        dbgprint("\ndxf: Failed to add default layer 0. \n");
+        errprint("\ndxf: Failed to add default layer 0. \n");
         crapool_destroy(dxf->pool);
         return -1;
     }
@@ -87,17 +87,17 @@ struct dxf_layer* dxf_add_layer(struct dxf* const dxf, const char *name)
     size_t len = strlen(name);
         
     if (len == 0) {
-        dbgprint("\ndxf: Layer name is empty. \n");
+        errprint("\ndxf: Layer name is empty. \n");
         return NULL;
     }
 
     if ((layer_name = dxf_alloc_string(dxf, len)) == NULL) {
-        dbgprint("\ndxf: Failed to allocate pool space for storing layer name. \n");
+        errprint("\ndxf: Failed to allocate pool space for storing layer name. \n");
         return NULL;
     }
 
     if ((layer = (struct dxf_layer*)crapool_alloc(dxf->pool, sizeof(struct dxf_layer))) == NULL) {
-        dbgprint("\ndxf: Failed to allocate pool space for storing layer struct. \n");
+        errprint("\ndxf: Failed to allocate pool space for storing layer struct. \n");
         return NULL;
     }
     
@@ -149,7 +149,7 @@ int dxf_add_entity(struct dxf* const dxf, const char* layer_name,
     int type = entity->type;
     
     if ((type < DXF_ENTITY_TYPE_START) || (type > DXF_ENTITY_TYPE_END)) {
-        dbgprint("\ndxf: Bad entity type %d. \n", type);
+        errprint("\ndxf: Bad entity type %d. \n", type);
         return -1;
     }
     
@@ -159,7 +159,7 @@ int dxf_add_entity(struct dxf* const dxf, const char* layer_name,
 
     if ((layer = dxf_get_layer(dxf, lay_name)) == NULL) {
         if ((layer = dxf_add_layer(dxf, lay_name)) == NULL) {
-            dbgprint("\ndxf: Failed to allocate pool space for storing layer struct. \n");
+            errprint("\ndxf: Failed to allocate pool space for storing layer struct. \n");
             return -1;
         }
     }
@@ -176,12 +176,24 @@ int dxf_add_entity(struct dxf* const dxf, const char* layer_name,
 
 void* dxf_alloc_binary(struct dxf* const dxf, size_t size)
 {
-    return crapool_alloc(dxf->pool, size);
+    void *buf = crapool_alloc(dxf->pool, size);
+
+    if (buf == NULL) {
+        errprint("\ndxf: Allocation failed. size=%u", size);
+    }
+
+    return buf;
 }
 
 char* dxf_alloc_string(struct dxf* const dxf, size_t len)
 {
-    return crapool_calloc(dxf->pool, 1, len + 2);
+    char *str = crapool_calloc(dxf->pool, 1, len + 2);
+
+    if (str == NULL) {
+        errprint("\ndxf: String buffer allocation failed. size=%u", len);
+    }
+
+    return str;
 }
 
 struct dxf_entity* dxf_alloc_entity(struct dxf* const dxf, int entity_type)
@@ -203,7 +215,7 @@ struct dxf_entity* dxf_alloc_entity(struct dxf* const dxf, int entity_type)
             size = sizeof(struct dxf_lwpolyline);
             break;
         default:
-            dbgprint("\ndxf: Could not allocate space for entity type %d. \n", entity_type);
+            errprint("\ndxf: Could not allocate space for entity type %d. \n", entity_type);
             return NULL;
     }
     
@@ -211,6 +223,7 @@ struct dxf_entity* dxf_alloc_entity(struct dxf* const dxf, int entity_type)
         *((int*)(&(entity->type))) = entity_type;
         *((size_t*)(&(entity->size))) = size;
         entity->block_ref = NULL;
+        entity->user_data = NULL;
         init_entity(entity);
     }
     

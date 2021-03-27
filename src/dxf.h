@@ -5,22 +5,22 @@
 #include "crapool.h"
 
 #define DXF_ENTITY_TYPE_START 0
-#define DXF_POINT 0
-#define DXF_LINE 1
-#define DXF_ARC 2
-#define DXF_CIRCLE 3
-#define DXF_ELLIPSE 4
-#define DXF_VERTEX 5
-#define DXF_POLYLINE 6
-#define DXF_LWPOLYLINE_VERTEX 7
-#define DXF_LWPOLYLINE 8
-#define DXF_SPLINE 9
-#define DXF_DIMENSION 10
-#define DXF_HATCH 11
-#define DXF_INSERT 12
-#define DXF_TEXTSTRING 13
-#define DXF_MTEXT 14
-#define DXF_SOLID 15
+    #define DXF_POINT 0
+    #define DXF_LINE 1
+    #define DXF_ARC 2
+    #define DXF_CIRCLE 3
+    #define DXF_ELLIPSE 4
+    #define DXF_VERTEX 5
+    #define DXF_POLYLINE 6
+    #define DXF_LWPOLYLINE_VERTEX 7
+    #define DXF_LWPOLYLINE 8
+    #define DXF_SPLINE 9
+    #define DXF_DIMENSION 10
+    #define DXF_HATCH 11
+    #define DXF_INSERT 12
+    #define DXF_TEXTSTRING 13
+    #define DXF_MTEXT 14
+    #define DXF_SOLID 15
 #define DXF_ENTITY_TYPE_END 15
 #define DXF_ENTITY_TYPES_COUNT (DXF_ENTITY_TYPE_END + 1)
 
@@ -28,29 +28,12 @@
 #define DXF_LWPOLYLINE_FLAG_CLOSED 1
 #define DXF_LWPOLYLINE_FLAG_PLINEGEN 128
 
-typedef int (*pfn_after_parse_hook_t)(struct dxf_entity*, void *);
-
 struct dxf_layer;
 struct dxf {
     struct hashtable header;
     struct dxf_layer *layers;
     struct dxf_layer *last_accessed_layer;
     struct crapool_desc *pool;
-};
-
-struct dxf_lwpolyline_vertex;
-struct dxf_lwpolyline_vertex {
-    double x;
-    double y;
-    double z;
-    
-    /* bulge = tan(theta / 4).
-     * Theta is the included angle of the arc that goes *COUNTER
-     * CLOCKWISE* from the starting point to the end point.
-     */
-    double bulge;
-    
-    struct dxf_lwpolyline_vertex *next;
 };
 
 struct dxf_layer {
@@ -67,8 +50,8 @@ struct dxf_entity {
     const int type;
     struct dxf_layer *layer;
     struct dxf_block *block_ref;
+    void *user_data;
     struct dxf_entity *next;
-    pfn_after_parse_hook_t after_parse_hook;
 };
 
 struct dxf_point {
@@ -103,6 +86,21 @@ struct dxf_circle {
     double y;
     double z;
     double r;
+};
+
+struct dxf_lwpolyline_vertex;
+struct dxf_lwpolyline_vertex {
+    double x;
+    double y;
+    double z;
+
+    /* bulge = tan(theta / 4).
+    * Theta is the included angle of the arc that goes *COUNTER
+    * CLOCKWISE* from the starting point to the end point.
+    */
+    double bulge;
+
+    struct dxf_lwpolyline_vertex *next;
 };
 
 struct dxf_lwpolyline {

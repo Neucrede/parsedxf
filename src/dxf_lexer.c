@@ -379,6 +379,7 @@ int dxf_lexer_open_desc(struct dxf_lexer_desc* const desc, const char *filename,
     fd = memmap_open(filename, O_RDONLY, 0);
     
     if (fd == (memmap_fd_t)(-1)) {
+        errprint("\nFailed to open %s for mapping. \n", filename);
         return -1;
     }
     
