@@ -24,6 +24,12 @@
 #define DXF_ENTITY_TYPE_END 15
 #define DXF_ENTITY_TYPES_COUNT (DXF_ENTITY_TYPE_END + 1)
 
+#define DXF_LWPOLYLINE_FLAG_DEFAULT 0
+#define DXF_LWPOLYLINE_FLAG_CLOSED 1
+#define DXF_LWPOLYLINE_FLAG_PLINEGEN 128
+
+typedef int (*pfn_after_parse_hook_t)(struct dxf_entity*, void *);
+
 struct dxf_layer;
 struct dxf {
     struct hashtable header;
@@ -37,7 +43,13 @@ struct dxf_lwpolyline_vertex {
     double x;
     double y;
     double z;
+    
+    /* bulge = tan(theta / 4).
+     * Theta is the included angle of the arc that goes *COUNTER
+     * CLOCKWISE* from the starting point to the end point.
+     */
     double bulge;
+    
     struct dxf_lwpolyline_vertex *next;
 };
 
@@ -56,6 +68,7 @@ struct dxf_entity {
     struct dxf_layer *layer;
     struct dxf_block *block_ref;
     struct dxf_entity *next;
+    pfn_after_parse_hook_t after_parse_hook;
 };
 
 struct dxf_point {
@@ -95,7 +108,7 @@ struct dxf_circle {
 struct dxf_lwpolyline {
     struct dxf_entity header;
     size_t number_of_vertices;
-    int closed;
+    int flag;
     struct dxf_lwpolyline_vertex *vertices;
     struct dxf_lwpolyline_vertex *tail_vertex;
 };

@@ -43,7 +43,7 @@ static int init_entity(struct dxf_entity* const entity)
             circle->x = circle->y = circle->z = circle->r = 0.0;
             return 0;
         case DXF_LWPOLYLINE:
-            lwpolyline->closed = 0;
+            lwpolyline->flag = DXF_LWPOLYLINE_FLAG_DEFAULT;
             lwpolyline->number_of_vertices = 0;
             lwpolyline->vertices = NULL;
             lwpolyline->tail_vertex = NULL;

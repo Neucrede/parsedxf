@@ -131,7 +131,7 @@ static int parse_circle(struct dxf_parser_desc* const parser_desc)
     struct dxf_token* const token = &(lexer_desc->token);
     struct dxf* const dxf = parser_desc->dxf;
     struct dxf_circle* circle;
-    int is_count_of_coord_values_read = 0;
+    int number_of_coord_values_read = 0;
     
     dbgprint("\ndxf_parser: Circle entity ");
     
@@ -152,20 +152,21 @@ static int parse_circle(struct dxf_parser_desc* const parser_desc)
             case DXF_X:
                 dbgprint("\nx=%f ", token->value.f);
                 circle->x = token->value.f;
-                ++is_count_of_coord_values_read;
+                ++number_of_coord_values_read;
                 break;
             case DXF_Y:
                 dbgprint("\ny=%f ", token->value.f);
                 circle->y = token->value.f;
-                ++is_count_of_coord_values_read;
+                ++number_of_coord_values_read;
                 break;
             case DXF_Z:
                 dbgprint("\nz=%f ", token->value.f);
                 circle->z = token->value.f;
-                ++is_count_of_coord_values_read;
+                ++number_of_coord_values_read;
                 break;
             case DXF_FLOAT:
-                if (is_count_of_coord_values_read == 3) {
+                /* Z coordinate value could be omitted. */
+                if (number_of_coord_values_read >= 2) {
                     dbgprint("\nr=%f ", token->value.f);
                     circle->r = token->value.f;
                 }
@@ -186,8 +187,8 @@ static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
 
     struct dxf_lwpolyline* lwpolyline;
     struct dxf_lwpolyline_vertex *vertex = NULL;
-    size_t number_of_vertices;
-    size_t number_of_vertices_stored = 0;
+    size_t number_of_vertices = 0;
+    size_t number_of_vertices_read = 0;
     
     dbgprint("\ndxf_parser: LwPolyline entity ");
     
@@ -200,24 +201,30 @@ static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
             case DXF_ENTITY_TYPE:
                 dxf_lexer_unget_token(lexer_desc);
                 dbgprint("\ndxf_parser: End of lwpolyline entity. \n");
-                if (number_of_vertices_stored < number_of_vertices) {
-                    dbgprint("\ndxf_parser: WARNING Actual number of vertices stored " \
+                if (number_of_vertices_read < number_of_vertices) {
+                    dbgprint("\ndxf_parser: WARNING Actual number of vertices read " \
                                 "is less than the number that it claims to have. \n");
-                    lwpolyline->number_of_vertices = number_of_vertices_stored;
+                    lwpolyline->number_of_vertices = number_of_vertices_read;
                 }
                 return 0;
             case DXF_LAYER_NAME:
                 dbgprint("\nlayer=%s ", token->value.str);
                 dxf_add_entity(dxf, token->value.str, (struct dxf_entity*)lwpolyline);
                 break;
+            case DXF_INTEGER:
+                if (token->group_code == 70) {
+                    dbgprint("\nflag=%d ", token->value.i);
+                    lwpolyline->flag = token->value.i;
+                }
+                break;
             case DXF_INTEGER32:
-                dbgprint("\nnumber_of_vertices=%d ", token->value.i);
                 if (token->group_code == 90) {
+                    dbgprint("\nnumber_of_vertices=%d ", token->value.i);
                     number_of_vertices = token->value.i;
                 }
                 break;
             case DXF_X:
-                if (number_of_vertices_stored >= number_of_vertices) {
+                if (number_of_vertices_read >= number_of_vertices) {
                     dbgprint("\nUnexpected token, skipping...");
                     break;
                 }
@@ -225,9 +232,11 @@ static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
                 if ((vertex = dxf_alloc_binary(dxf, sizeof(struct dxf_lwpolyline_vertex))) == NULL) {
                     return -1;
                 }
+                dbgprint("\ndxf_parser: Allocated space for lwpolyline vertex @0x%x \n", 
+                        (unsigned int)vertex);
                 vertex->next = NULL;
                 vertex->x = token->value.f;
-                vertex->y = vertex->z = 0.0;
+                vertex->y = vertex->z = vertex->bulge = 0.0;
                 if (lwpolyline->tail_vertex != NULL) {
                     lwpolyline->tail_vertex->next = vertex;
                     lwpolyline->tail_vertex = vertex;
@@ -235,9 +244,10 @@ static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
                 else {
                     lwpolyline->tail_vertex = lwpolyline->vertices = vertex;
                 }
+                ++number_of_vertices_read;
                 break;
             case DXF_Y:
-                if ((number_of_vertices_stored >= number_of_vertices) || (vertex == NULL)) {
+                if ((number_of_vertices_read >= number_of_vertices) || (vertex == NULL)) {
                     dbgprint("\nUnexpected token, skipping...");
                     break;
                 }
@@ -245,14 +255,22 @@ static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
                 vertex->y = token->value.f;
                 break;
             case DXF_Z:
-                if ((number_of_vertices_stored >= number_of_vertices) || (vertex == NULL)) {
+                if ((number_of_vertices_read >= number_of_vertices) || (vertex == NULL)) {
                     dbgprint("\nUnexpected token, skipping...");
                     break;
                 }
                 dbgprint("\nz=%f ", token->value.f);
                 vertex->z = token->value.f;
-                ++number_of_vertices_stored;
-                vertex = NULL;
+                break;
+            case DXF_FLOAT:
+                if ((number_of_vertices_read >= number_of_vertices) || (vertex == NULL)) {
+                    dbgprint("\nUnexpected or unwanted token, skipping...");
+                    break;
+                }
+                if (token->group_code == 42) {
+                    dbgprint("\nbulge=%f ", token->value.f);
+                    vertex->bulge = token->value.f;
+                }
                 break;
             default:
                 break;
