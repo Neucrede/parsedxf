@@ -189,8 +189,8 @@ int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode,
     switch (key_copy_mode) {
         case HASHTABLE_COPY_VALUE:
             if (key_size > sizeof(entry->key)) {
-                dbgprint("hashtab: A key with key_size=%u is too large to fit into union entry->key. " \
-                        "Will be truncated to %u. \n", 
+                dbgprint("hashtab: A key with key_size=%zu is too large to fit into union entry->key. " \
+                        "Will be truncated to %zu. \n", 
                         key_size, sizeof(entry->key));
                 key_size = sizeof(entry->key);
             }

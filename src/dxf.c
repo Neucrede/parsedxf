@@ -248,7 +248,7 @@ void* dxf_alloc_binary(struct dxf* const dxf, size_t size)
     void *buf = crapool_alloc(dxf->pool, size);
 
     if (buf == NULL) {
-        errprint("dxf: Allocation failed. size=%u \n", size);
+        errprint("dxf: Allocation failed. size=%zu \n", size);
     }
 
     return buf;
