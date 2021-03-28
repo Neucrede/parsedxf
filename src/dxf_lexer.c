@@ -140,9 +140,9 @@ static int xlat_tab_init()
 #ifdef DEBUG
     for (grp_code = 0; grp_code < 2000; ++grp_code) {
         if ((desc = xlat_tab_get(grp_code)) != &dxf_invalid_desc) {
-            printf("grp_code %d: tag=%d, name=%s, start=%d, end=%d, scanner=@0x%x \n", 
+            printf("grp_code %u: tag=%d, name=%s, start=%u, end=%u, scanner=@0x%lx \n", 
                     grp_code, desc->tag, desc->name,
-                    desc->range_start, desc->range_end, (unsigned int)(desc->scanner));
+                    desc->range_start, desc->range_end, (unsigned long)(desc->scanner));
         }
     }
 #endif
@@ -445,9 +445,9 @@ int dxf_lexer_get_token(struct dxf_lexer_desc* const desc)
     desc->token.group_code = grp_code;
     retval = grp_code_desc->scanner(desc, NULL);
     
-    dbgprint("dxf_lexer: Current token tag=%d, group_code=%d, value=@0x%x \n",
+    dbgprint("dxf_lexer: Current token tag=%d, group_code=%u, value=@0x%lx \n",
             desc->token.tag, desc->token.group_code, 
-            (unsigned int)(&(desc->token.value)));
+            (unsigned long)(&(desc->token.value)));
             
     return retval;
 }

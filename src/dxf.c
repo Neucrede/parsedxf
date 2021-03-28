@@ -76,8 +76,8 @@ int dxf_init(struct dxf* const dxf, size_t pool_size)
         return -1;
     }
     
-    dbgprint("dxf: Initialized dxf struct @0x%x, pool_size=%u. \n",
-            (unsigned int)dxf, pool_size);
+    dbgprint("dxf: Initialized dxf struct @0x%lx, pool_size=%zu. \n",
+            (unsigned long)dxf, pool_size);
     
     return 0;
 }
@@ -130,9 +130,9 @@ struct dxf_container* dxf_add_container(struct dxf* const dxf, const char *name,
             return NULL;
     }
     
-    dbgprint("dxf: Added container @0x%x, name=%s, entities=@0x%x, next=@0x%x, type=%d \n",
-            (unsigned int)container, container->name, (unsigned int)(container->entities), 
-            (unsigned int)(container->next), type);
+    dbgprint("dxf: Added container @0x%lx, name=%s, entities=@0x%lx, next=@0x%lx, type=%d \n",
+            (unsigned long)container, container->name, (unsigned long)(container->entities), 
+            (unsigned long)(container->next), type);
     
     return container;
 }
@@ -160,18 +160,18 @@ struct dxf_container* dxf_get_container(struct dxf* const dxf, const char *name,
 
     if (strcmp((*specific_last_accessed_container)->name, name) == 0) {
         container = *specific_last_accessed_container;
-        dbgprint("dxf: Layer found (fast fetch) @0x%x, name=%s, entities=@0x%x, next=@0x%x \n",
-            (unsigned int)container, container->name, 
-            (unsigned int)(container->entities), (unsigned int)(container->next));
+        dbgprint("dxf: Layer found (fast fetch) @0x%lx, name=%s, entities=@0x%lx, next=@0x%lx \n",
+            (unsigned long)container, container->name, 
+            (unsigned long)(container->entities), (unsigned long)(container->next));
         return container;
     }
 
     for (container = *specific_last_accessed_container; container != NULL; container = container->next) {
         if (strcmp(container->name, name) == 0) {
             *specific_last_accessed_container = container;
-            dbgprint("dxf: Layer found @0x%x, name=%s, entities=@0x%x, next=@0x%x \n",
-                    (unsigned int)container, container->name, 
-                    (unsigned int)(container->entities), (unsigned int)(container->next));
+            dbgprint("dxf: Layer found @0x%lx, name=%s, entities=@0x%lx, next=@0x%lx \n",
+                    (unsigned long)container, container->name, 
+                    (unsigned long)(container->entities), (unsigned long)(container->next));
             return container;
         }
     }
@@ -236,9 +236,9 @@ int dxf_add_entity(struct dxf* const dxf, const char* container_name,
     entity->next = container->entities[entity_type];
     container->entities[entity_type] = entity;
     
-    dbgprint("dxf: Added entity @0x%x (type=%d) to container @0x%x (name=%s, type=%d). \n",
-                (unsigned int)entity, entity_type, 
-                (unsigned int)container, container->name, container->type);
+    dbgprint("dxf: Added entity @0x%lx (type=%d) to container @0x%lx (name=%s, type=%d). \n",
+                (unsigned long)entity, entity_type, 
+                (unsigned long)container, container->name, container->type);
 
     return 0;
 }
@@ -259,7 +259,7 @@ char* dxf_alloc_string(struct dxf* const dxf, size_t len)
     char *str = crapool_calloc(dxf->pool, 1, len + 2);
 
     if (str == NULL) {
-        errprint("dxf: String buffer allocation failed. size=%u \n", len);
+        errprint("dxf: String buffer allocation failed. size=%zu \n", len);
     }
 
     return str;
@@ -298,7 +298,7 @@ struct dxf_entity* dxf_alloc_entity(struct dxf* const dxf, int entity_type)
         init_entity(entity);
     }
     
-    dbgprint("dxf: Allocated space for new entity @0x%x, type=%d, size=%u. \n",
-                (unsigned int)entity, entity_type, entity->size);
+    dbgprint("dxf: Allocated space for new entity @0x%lx, type=%d, size=%zu. \n",
+                (unsigned long)entity, entity_type, entity->size);
     return entity;
 }

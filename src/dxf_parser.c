@@ -262,8 +262,8 @@ static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
                 if ((vertex = dxf_alloc_binary(dxf, sizeof(struct dxf_lwpolyline_vertex))) == NULL) {
                     return -1;
                 }
-                dbgprint("dxf_parser: Allocated space for lwpolyline vertex @0x%x \n", 
-                        (unsigned int)vertex);
+                dbgprint("dxf_parser: Allocated space for lwpolyline vertex @0x%lx \n", 
+                        (unsigned long)vertex);
                 vertex->next = NULL;
                 vertex->x = token->value.f;
                 vertex->y = vertex->z = vertex->bulge = 0.0;
