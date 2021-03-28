@@ -64,7 +64,7 @@ extern "C" {
 int hashtable_create(struct hashtable* const hashtab, size_t len, float load_factor, 
                     size_t pool_size, pfn_hash_t hash_fcn, pfn_keycmp_t keycmp_fcn);
 int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode, size_t key_size,
-                    void *value, int value_copy_mode, int value_size);
+                    void *value, int value_copy_mode, size_t value_size);
 void* hashtable_get(struct hashtable* const hashtab, void *key);
 int hashtable_destroy(struct hashtable* const hashtab);
 

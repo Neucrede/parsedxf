@@ -133,7 +133,7 @@ int hashtable_create(struct hashtable* const hashtab, size_t len, float load_fac
 }
 
 int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode, size_t key_size,
-                    void *value, int value_copy_mode, int value_size)
+                    void *value, int value_copy_mode, size_t value_size)
 {
     int retval = 0;
     

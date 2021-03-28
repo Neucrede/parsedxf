@@ -52,3 +52,6 @@ $(DEPDIR)/%.d : $(SRCDIR)/%.c
 clean:
 	-rm -f $(OBJDIR)/*.o
 	-rm -f $(DEPDIR)/*.d
+	-rm -f $(OUT)
+	-rm -f $(OUTA)
+
