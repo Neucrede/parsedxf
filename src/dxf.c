@@ -56,120 +56,189 @@ static int init_entity(struct dxf_entity* const entity)
 int dxf_init(struct dxf* const dxf, size_t pool_size)
 {
     if (hashtable_create(&(dxf->header), 37, 0, 0, (pfn_hash_t)str_hash, (pfn_keycmp_t)str_cmp) != 0) {
-        errprint("\ndxf: Failed to create header. \n");
+        errprint("dxf: Failed to create header. \n");
         return -1;
     }
     
     if ((dxf->pool = crapool_create(pool_size, NULL)) == NULL) {
-        errprint("\ndxf: Memory pool creation failed. \n");
+        errprint("dxf: Memory pool creation failed. \n");
         return -1;
     }
 
     dxf->layers = NULL;
     dxf->last_accessed_layer = NULL;
+    dxf->blocks = NULL;
+    dxf->last_accessed_block = NULL;
 
     if (dxf_add_layer(dxf, "0") == NULL) {
-        errprint("\ndxf: Failed to add default layer 0. \n");
+        errprint("dxf: Failed to add default layer 0. \n");
         crapool_destroy(dxf->pool);
         return -1;
     }
     
-    dbgprint("\ndxf: Initialized dxf struct @0x%x, pool_size=%u. \n",
+    dbgprint("dxf: Initialized dxf struct @0x%x, pool_size=%u. \n",
             (unsigned int)dxf, pool_size);
     
     return 0;
 }
 
-struct dxf_layer* dxf_add_layer(struct dxf* const dxf, const char *name)
+struct dxf_container* dxf_add_container(struct dxf* const dxf, const char *name, int type)
 {
-    struct dxf_layer *layer;
-    char *layer_name;
+    struct dxf_container *container;
+    char *container_name;
     size_t len = strlen(name);
         
     if (len == 0) {
-        errprint("\ndxf: Layer name is empty. \n");
+        errprint("dxf: Container name is empty. \n");
         return NULL;
     }
 
-    if ((layer_name = dxf_alloc_string(dxf, len)) == NULL) {
-        errprint("\ndxf: Failed to allocate pool space for storing layer name. \n");
+    if ((type != DXF_BLOCK) && (type != DXF_LAYER)) {
+        errprint("dxf: Bad container type %d. \n", type);
+    }
+
+    if ((container_name = dxf_alloc_string(dxf, len)) == NULL) {
+        errprint("dxf: Failed to allocate pool space for storing container name. \n");
         return NULL;
     }
 
-    if ((layer = (struct dxf_layer*)crapool_alloc(dxf->pool, sizeof(struct dxf_layer))) == NULL) {
-        errprint("\ndxf: Failed to allocate pool space for storing layer struct. \n");
+    if ((container = (struct dxf_container*)crapool_alloc(dxf->pool, sizeof(struct dxf_container))) == NULL) {
+        errprint("dxf: Failed to allocate pool space for storing container struct. \n");
         return NULL;
     }
     
-    memset(&(layer->entities), 0, DXF_ENTITY_TYPES_COUNT * sizeof(struct dxf_entity*));
-    memcpy(layer_name, name, len + 1);
-    layer->name = layer_name;
-    layer->next = dxf->layers;
-    dxf->layers = layer;
-    dxf->last_accessed_layer = layer;
+    memset(&(container->entities), 0, DXF_ENTITY_TYPES_COUNT * sizeof(struct dxf_entity*));
+    memcpy(container_name, name, len + 1);
+    container->type = type;
+    *((char**)(&(container->name))) = container_name;
+    container->flag = 0;
+    container->x = container->y = container->z = 0.0;
+
+    switch (type) {
+        case DXF_LAYER:
+            container->next = dxf->layers;
+            dxf->layers = container;
+            dxf->last_accessed_layer = container;
+            break;
+        case DXF_BLOCK:
+            container->next = dxf->blocks;
+            dxf->blocks = container;
+            dxf->last_accessed_block = container;
+            break;
+        default:
+            errprint("dxf: Bad container type %d. Control flow was messed up. \n", type);
+            return NULL;
+    }
     
-    dbgprint("\ndxf: Added layer @0x%x, name=%s, entities=@0x%x, next=@0x%x \n",
-            (unsigned int)layer, layer->name, (unsigned int)(layer->entities), 
-            (unsigned int)(layer->next));
+    dbgprint("dxf: Added container @0x%x, name=%s, entities=@0x%x, next=@0x%x, type=%d \n",
+            (unsigned int)container, container->name, (unsigned int)(container->entities), 
+            (unsigned int)(container->next), type);
     
-    return layer;
+    return container;
 }
 
-struct dxf_layer* dxf_get_layer(struct dxf* const dxf, const char *name)
+struct dxf_container* dxf_get_container(struct dxf* const dxf, const char *name, int type)
 {
-    struct dxf_layer *layer;
+    struct dxf_container *container;
+    struct dxf_container **specific_last_accessed_container;
 
-    if (strcmp(dxf->last_accessed_layer->name, name) == 0) {
-        layer = dxf->last_accessed_layer;
-        dbgprint("\ndxf: Layer found (fast fetch) @0x%x, name=%s, entities=@0x%x, next=@0x%x \n",
-            (unsigned int)layer, layer->name, 
-            (unsigned int)(layer->entities), (unsigned int)(layer->next));
-        return layer;
+    switch (type) {
+        case DXF_LAYER:
+            specific_last_accessed_container = &(dxf->last_accessed_layer);
+            break;
+        case DXF_BLOCK:
+            specific_last_accessed_container = &(dxf->last_accessed_block);
+            break;
+        default:
+            errprint("dxf: Bad container type.");
+            return NULL;
     }
 
-    for (layer = dxf->layers; layer != NULL; layer = layer->next) {
-        if (strcmp(layer->name, name) == 0) {
-            dxf->last_accessed_layer = layer;
-            dbgprint("\ndxf: Layer found @0x%x, name=%s, entities=@0x%x, next=@0x%x \n",
-                    (unsigned int)layer, layer->name, 
-                    (unsigned int)(layer->entities), (unsigned int)(layer->next));
-            return layer;
+    if (*specific_last_accessed_container == NULL) {
+        return NULL;
+    }
+
+    if (strcmp((*specific_last_accessed_container)->name, name) == 0) {
+        container = *specific_last_accessed_container;
+        dbgprint("dxf: Layer found (fast fetch) @0x%x, name=%s, entities=@0x%x, next=@0x%x \n",
+            (unsigned int)container, container->name, 
+            (unsigned int)(container->entities), (unsigned int)(container->next));
+        return container;
+    }
+
+    for (container = *specific_last_accessed_container; container != NULL; container = container->next) {
+        if (strcmp(container->name, name) == 0) {
+            *specific_last_accessed_container = container;
+            dbgprint("dxf: Layer found @0x%x, name=%s, entities=@0x%x, next=@0x%x \n",
+                    (unsigned int)container, container->name, 
+                    (unsigned int)(container->entities), (unsigned int)(container->next));
+            return container;
         }
     }
 
-    dbgprint("\ndxf: Layer %s not found. \n", name);
+    dbgprint("dxf: Container %s not found. \n", name);
     return NULL;
 }
 
-int dxf_add_entity(struct dxf* const dxf, const char* layer_name,
-                    struct dxf_entity* entity)
+int dxf_add_entity(struct dxf* const dxf, const char* container_name,
+                    struct dxf_entity* entity, int behaviour)
 {
-    struct dxf_layer *layer;
-    const char *lay_name = layer_name;
-    int type = entity->type;
+    struct dxf_container *container;
+    int entity_type = entity->type;
+    int container_type;
     
-    if ((type < DXF_ENTITY_TYPE_START) || (type > DXF_ENTITY_TYPE_END)) {
-        errprint("\ndxf: Bad entity type %d. \n", type);
+    if ((entity_type < DXF_ENTITY_TYPE_START) || (entity_type > DXF_ENTITY_TYPE_END)) {
+        errprint("dxf: Bad entity type %d. \n", entity_type);
         return -1;
     }
-    
-    if (lay_name == NULL) {
-        lay_name = "0";
-    }
 
-    if ((layer = dxf_get_layer(dxf, lay_name)) == NULL) {
-        if ((layer = dxf_add_layer(dxf, lay_name)) == NULL) {
-            errprint("\ndxf: Failed to allocate pool space for storing layer struct. \n");
+    if (container_name == NULL) {
+        if (behaviour == DXF_ADD_ENTITY_TO_LAYER) {
+            container_name = "0";
+        }
+        else {
+            errprint("dxf: Anonymous block. \n");
             return -1;
         }
     }
 
-    entity->layer = layer;
-    entity->next = layer->entities[type];
-    layer->entities[type] = entity;
+    switch (behaviour) {
+        case DXF_ADD_ENTITY_TO_LAYER:
+            container_type = DXF_LAYER;
+            break;
+        case DXF_ADD_ENTITY_TO_BLOCK:
+            container_type = DXF_BLOCK;
+            break;
+        default:
+            errprint("dxf: Unrecognized behaviour %d. \n", behaviour);
+            return -1;
+    }
+
+    if ((container = dxf_get_container(dxf, container_name, container_type)) == NULL) {
+        if ((container = dxf_add_container(dxf, container_name, container_type)) == NULL) {
+            errprint("dxf: Failed to allocate pool space for storing container struct. \n");
+            return -1;
+        }
+    }
+
+    switch (behaviour) {
+        case DXF_ADD_ENTITY_TO_LAYER:
+            entity->layer = container;
+            break;
+        case DXF_ADD_ENTITY_TO_BLOCK:
+            entity->block = container;
+            break;
+        default:
+            errprint("dxf: Unrecognized behaviour %d. \n", behaviour);
+            return -1;
+    }
+
+    entity->next = container->entities[entity_type];
+    container->entities[entity_type] = entity;
     
-    dbgprint("\ndxf: Added entity @0x%x (type=%d) to layer @0x%x (name=%s). \n",
-                (unsigned int)entity, type, (unsigned int)layer, layer->name);
+    dbgprint("dxf: Added entity @0x%x (type=%d) to container @0x%x (name=%s, type=%d). \n",
+                (unsigned int)entity, entity_type, 
+                (unsigned int)container, container->name, container->type);
 
     return 0;
 }
@@ -179,7 +248,7 @@ void* dxf_alloc_binary(struct dxf* const dxf, size_t size)
     void *buf = crapool_alloc(dxf->pool, size);
 
     if (buf == NULL) {
-        errprint("\ndxf: Allocation failed. size=%u", size);
+        errprint("dxf: Allocation failed. size=%u \n", size);
     }
 
     return buf;
@@ -190,7 +259,7 @@ char* dxf_alloc_string(struct dxf* const dxf, size_t len)
     char *str = crapool_calloc(dxf->pool, 1, len + 2);
 
     if (str == NULL) {
-        errprint("\ndxf: String buffer allocation failed. size=%u", len);
+        errprint("dxf: String buffer allocation failed. size=%u \n", len);
     }
 
     return str;
@@ -215,19 +284,21 @@ struct dxf_entity* dxf_alloc_entity(struct dxf* const dxf, int entity_type)
             size = sizeof(struct dxf_lwpolyline);
             break;
         default:
-            errprint("\ndxf: Could not allocate space for entity type %d. \n", entity_type);
+            errprint("dxf: Could not allocate space for entity type %d. \n", entity_type);
             return NULL;
     }
     
     if ((entity = (struct dxf_entity*)crapool_alloc(dxf->pool, size)) != NULL) {
         *((int*)(&(entity->type))) = entity_type;
         *((size_t*)(&(entity->size))) = size;
-        entity->block_ref = NULL;
+        entity->layer = NULL;
+        entity->block = NULL;
+        entity->next = NULL;
         entity->user_data = NULL;
         init_entity(entity);
     }
     
-    dbgprint("\ndxf: Allocated space for new entity @0x%x, type=%d, size=%u. \n",
+    dbgprint("dxf: Allocated space for new entity @0x%x, type=%d, size=%u. \n",
                 (unsigned int)entity, entity_type, entity->size);
     return entity;
 }

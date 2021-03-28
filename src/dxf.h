@@ -4,6 +4,9 @@
 #include "hashtab.h"
 #include "crapool.h"
 
+#define DXF_LAYER 0
+#define DXF_BLOCK 1
+
 #define DXF_ENTITY_TYPE_START 0
     #define DXF_POINT 0
     #define DXF_LINE 1
@@ -28,30 +31,40 @@
 #define DXF_LWPOLYLINE_FLAG_CLOSED 1
 #define DXF_LWPOLYLINE_FLAG_PLINEGEN 128
 
-struct dxf_layer;
+#define DXF_ADD_ENTITY_TO_LAYER 0
+#define DXF_ADD_ENTITY_TO_BLOCK 1
+
+struct dxf_entity;
+struct dxf_container {
+    int type;
+    const char* const name;
+    int flag;
+    double x;
+    double y;
+    double z;
+    struct dxf_entity *entities[DXF_ENTITY_TYPES_COUNT];
+    struct dxf_container *next;
+};
+
+#define dxf_layer dxf_container
+#define dxf_block dxf_container
+
 struct dxf {
     struct hashtable header;
     struct dxf_layer *layers;
     struct dxf_layer *last_accessed_layer;
+    struct dxf_block *blocks;
+    struct dxf_block *last_accessed_block;
     struct crapool_desc *pool;
 };
 
-struct dxf_layer {
-    char *name;
-    struct dxf_entity *entities[DXF_ENTITY_TYPES_COUNT];
-    struct dxf_layer *next;
-};
-
-struct dxf_block;
-
-struct dxf_entity;
 struct dxf_entity {
     const size_t size;
     const int type;
     struct dxf_layer *layer;
-    struct dxf_block *block_ref;
-    void *user_data;
+    struct dxf_block *block;
     struct dxf_entity *next;
+    void *user_data;
 };
 
 struct dxf_point {
@@ -95,9 +108,9 @@ struct dxf_lwpolyline_vertex {
     double z;
 
     /* bulge = tan(theta / 4).
-    * Theta is the included angle of the arc that goes *COUNTER
-    * CLOCKWISE* from the starting point to the end point.
-    */
+     * Theta is the included angle of the arc that goes *COUNTER
+     * CLOCKWISE* from the starting point to the end point.
+     */
     double bulge;
 
     struct dxf_lwpolyline_vertex *next;
@@ -116,13 +129,19 @@ extern "C" {
 #endif
     
 int dxf_init(struct dxf* const dxf, size_t pool_size);
-struct dxf_layer* dxf_add_layer(struct dxf* const dxf, const char *name);
-struct dxf_layer* dxf_get_layer(struct dxf* const dxf, const char *name);
-int dxf_add_entity(struct dxf* const dxf, const char* layer_name,
-                    struct dxf_entity* entity);
+struct dxf_container* dxf_add_container(struct dxf* const dxf, const char *name, int type);
+struct dxf_container* dxf_get_container(struct dxf* const dxf, const char *name, int type);
+
+int dxf_add_entity(struct dxf* const dxf, const char* container_name,
+                    struct dxf_entity* entity, int behaviour);
 void* dxf_alloc_binary(struct dxf* const dxf, size_t size);
 char* dxf_alloc_string(struct dxf* const dxf, size_t len);
 struct dxf_entity* dxf_alloc_entity(struct dxf* const dxf, int entity_type);
+
+#define dxf_add_layer(dxf, name) dxf_add_container(dxf, name, DXF_LAYER)
+#define dxf_add_block(dxf, name) dxf_add_container(dxf, name, DXF_BLOCK)
+#define dxf_get_layer(dxf, name) dxf_get_container(dxf, name, DXF_LAYER)
+#define dxf_get_block(dxf, name) dxf_get_container(dxf, name, DXF_BLOCK)
 
 #ifdef __cplusplus
 }

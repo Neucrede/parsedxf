@@ -122,6 +122,7 @@ int dxf_lexer_open_desc(struct dxf_lexer_desc* const desc, const char *filename,
 int dxf_lexer_close_desc(struct dxf_lexer_desc* const desc, int destroy_pool);
 int dxf_lexer_get_token(struct dxf_lexer_desc* const desc);
 int dxf_lexer_unget_token(struct dxf_lexer_desc* const desc);
+int dxf_lexer_skip_to(struct dxf_lexer_desc* const lexer_desc, int tag_expected);
 
 #ifdef __cplusplus
 }

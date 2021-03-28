@@ -9,6 +9,8 @@ typedef int(*pfn_entity_after_parse_hook_t)(struct dxf_entity*);
 struct dxf_parser_desc {
     struct dxf_lexer_desc* lexer_desc;
     struct dxf* dxf;
+    struct dxf_block* target_block;
+    struct dxf_layer* target_layer;
     pfn_entity_after_parse_hook_t entity_after_parse_hooks[DXF_ENTITY_TYPES_COUNT];
 };
 

@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
     ((struct dxf_point*)entity)->x = 1.0f;
     ((struct dxf_point*)entity)->y = 2.0f;
     ((struct dxf_point*)entity)->z = 3.0f;
-    dxf_add_entity(&dxf, "Layer1", entity);
+    dxf_add_entity(&dxf, "Layer1", entity, DXF_ADD_ENTITY_TO_LAYER);
 
     entity = dxf_alloc_entity(&dxf, DXF_LINE);
     ((struct dxf_line*)entity)->x1 = 1.0f;
@@ -28,7 +28,7 @@ int main(int argc, char *argv[])
     ((struct dxf_line*)entity)->x2 = 4.0f;
     ((struct dxf_line*)entity)->y2 = 5.0f;
     ((struct dxf_line*)entity)->z2 = 6.0f;
-    dxf_add_entity(&dxf, "Layer2", entity);
+    dxf_add_entity(&dxf, "Layer2", entity, DXF_ADD_ENTITY_TO_LAYER);
 
     return 0;
 }
