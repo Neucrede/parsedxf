@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     }
 
     dxf_lexer_init();
-    dxf_lexer_init_desc(&lexer_desc);
+    dxf_lexer_clear_desc(&lexer_desc);
     if (dxf_lexer_open_desc(&lexer_desc, argv[1], NULL) == -1) {
         printf("Failed to open %s for mapping. \n", argv[1]);
         return 1;

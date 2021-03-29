@@ -96,12 +96,11 @@ struct dxf_token {
 };
 
 struct dxf_lexer_desc {
-    char *buf;
-    char *cur;
-    char *prev;
-    char *end;
+    const char *buf;
+    const char *cur;
+    const char *prev;
+    const char *end;
     memmap_fd_t fd;
-    int err;
     char line_buf[DXF_LEXER_LINE_BUFFER_SIZE];
     struct crapool_desc *pool;
     struct dxf_token token;
@@ -116,7 +115,9 @@ extern "C" {
 #endif
 
 int dxf_lexer_init();
-int dxf_lexer_init_desc(struct dxf_lexer_desc* const desc);
+int dxf_lexer_init_desc(struct dxf_lexer_desc* const desc, const char *buf,
+                        size_t buf_len, struct crapool_desc* const pool);
+int dxf_lexer_clear_desc(struct dxf_lexer_desc* const desc);
 int dxf_lexer_open_desc(struct dxf_lexer_desc* const desc, const char *filename, 
                         struct crapool_desc* const pool);
 int dxf_lexer_close_desc(struct dxf_lexer_desc* const desc, int destroy_pool);

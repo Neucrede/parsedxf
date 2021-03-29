@@ -6,7 +6,7 @@ int main() {
     struct dxf_lexer_desc desc;
 
     dxf_lexer_init();
-    dxf_lexer_init_desc(&desc);
+    dxf_lexer_clear_desc(&desc);
     dxf_lexer_open_desc(&desc, "./aa.dxf", NULL);
 
     printf("%d\n", strlen(desc.buf));
