@@ -4,8 +4,6 @@
 #include "crapool.h"
 #include "dbgprint.h"
 
-#define NO_DBGPRINT
-
 #ifdef USE_PTHREAD
     #include <pthread.h>
 #endif
@@ -32,8 +30,29 @@ static int unlock_desc(struct crapool_desc* const desc)
 #endif
 }
 
+static void adjust_head_allocable_desc(struct crapool_desc* const desc)
+{
+    struct crapool_desc* desc_avail;
+    
+    for (desc_avail = desc->head_allocable_desc; desc_avail != NULL;
+        desc_avail = desc_avail->next)
+    {
+        if (desc_avail->free_space > CRAPOOL_SKIP_EXAMING_SIZE_THRESHOLD) {
+            dbgprint("crapool: Set head_allocable_desc pointer to @0x%lx for desc @0x%lx. \n",
+                    (unsigned long)desc_avail, (unsigned long)desc);
+            desc->head_allocable_desc = desc_avail;
+            break;
+        }
+    }
+}
+
 struct crapool_desc* crapool_create(size_t size, void* const mutex)
 {
+#ifdef CRAPOOL_DISABLED
+    (void)size;
+    (void)mutex;
+    return (struct crapool_desc*)(-1);
+#else
     size_t alloc_size;
     struct crapool_desc *desc;
     char *buf;
@@ -77,26 +96,15 @@ struct crapool_desc* crapool_create(size_t size, void* const mutex)
                 (unsigned long)desc, desc->free_space, (unsigned long)(desc->next_free));
     
     return desc;
-}
-
-static void adjust_head_allocable_desc(struct crapool_desc* const desc)
-{
-    struct crapool_desc* desc_avail;
-    
-    for (desc_avail = desc->head_allocable_desc; desc_avail != NULL;
-        desc_avail = desc_avail->next)
-    {
-        if (desc_avail->free_space > CRAPOOL_SKIP_EXAMING_SIZE_THRESHOLD) {
-            dbgprint("crapool: Set head_allocable_desc pointer to @0x%lx for desc @0x%lx. \n",
-                    (unsigned long)desc_avail, (unsigned long)desc);
-            desc->head_allocable_desc = desc_avail;
-            break;
-        }
-    }
+#endif
 }
 
 void* crapool_alloc(struct crapool_desc* const desc, size_t size)
 {
+#ifdef CRAPOOL_DISABLED
+    (void)desc;
+    return malloc(size);
+#else
     struct crapool_desc *desc_avail;
     struct crapool_desc *curr_desc;
     char *space;
@@ -158,16 +166,23 @@ void* crapool_alloc(struct crapool_desc* const desc, size_t size)
         curr_desc->tail = desc_avail;
     }
 
+    desc_avail->free_space -= size;
     space = desc_avail->next_free;
+    desc_avail->next_free += size;
     adjust_head_allocable_desc(desc);
     unlock_desc(desc);
 
     dbgprint("crapool: Returning allocated space @0x%lx. \n", (unsigned long)space);
     return space;
+#endif
 }
 
 void* crapool_calloc(struct crapool_desc* const desc, size_t count, size_t elmsize)
 {
+#ifdef CRAPOOL_DISABLED
+    (void)desc;
+    return calloc(count, elmsize);
+#else
     size_t size = count * elmsize;
     void *buf;
         
@@ -177,10 +192,15 @@ void* crapool_calloc(struct crapool_desc* const desc, size_t count, size_t elmsi
     
     memset(buf, 0, size);
     return buf;
+#endif
 }
     
 int crapool_destroy(struct crapool_desc* const desc)
 {
+#ifdef CRAPOOL_DISABLED
+    (void)desc;
+    return 0;
+#else
     struct crapool_desc *curr;
     struct crapool_desc *next;
 
@@ -214,4 +234,5 @@ int crapool_destroy(struct crapool_desc* const desc)
 #endif
 
     return 0;
+#endif
 }

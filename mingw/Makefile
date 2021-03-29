@@ -1,5 +1,5 @@
 OUT = libparsedxf.dll
-OUTA = libparsedxf.a
+OUTA = $(OUT:.dll=.a)
 OUTDIR = ./out
 OBJDIR = ./obj
 DEPDIR = ./deps
@@ -9,7 +9,7 @@ SOURCES = $(wildcard $(SRCDIR)/*.c)
 OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.c, %.o, $(notdir $(SOURCES))))
 DEPS = $(addprefix $(DEPDIR)/, $(patsubst %.c, %.d, $(notdir $(SOURCES))))
 CC = gcc
-CCFLAGS = -O2 -Wall -fPIC $(INCDIRS)
+CCFLAGS = -Wall -fPIC $(INCDIRS)
 LDFLAGS = --shared
 AR = ar
 ARFLAGS = rsv
@@ -17,10 +17,11 @@ ARFLAGS = rsv
 INCLUDE_DEPS = 0
 
 debug : deps main
-debug : CCFLAGS += -DDEBUG
+debug : CCFLAGS += -g -DDEBUG
 debug : INCLUDE_DEPS = 1
 
 release : deps main
+release : CCFLAGS += -O2
 release : INCLUDE_DEPS = 1
 
 main : $(OUT) $(OUTA)
@@ -29,7 +30,7 @@ $(OUT) : $(OBJS)
 	$(CC) -o $(OUT) $(OBJS) $(LDFLAGS)
 	
 $(OUTA) : $(OBJS)
-#	$(AR) $(ARFLAGS) $@ $(OBJS)
+	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	$(CC) -c $(CCFLAGS) $< -o $@

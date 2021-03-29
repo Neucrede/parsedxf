@@ -85,6 +85,7 @@ int dxf_init(struct dxf* const dxf, size_t pool_size)
 struct dxf_container* dxf_add_container(struct dxf* const dxf, const char *name, int type)
 {
     struct dxf_container *container;
+    struct dxf_container *head_old;
     char *container_name;
     size_t len = strlen(name);
         
@@ -116,12 +117,14 @@ struct dxf_container* dxf_add_container(struct dxf* const dxf, const char *name,
 
     switch (type) {
         case DXF_LAYER:
-            container->next = dxf->layers;
+            head_old = dxf->layers;
+            container->next = head_old;
             dxf->layers = container;
             dxf->last_accessed_layer = container;
             break;
         case DXF_BLOCK:
-            container->next = dxf->blocks;
+            head_old = dxf->blocks;
+            container->next = head_old;
             dxf->blocks = container;
             dxf->last_accessed_block = container;
             break;
@@ -140,14 +143,17 @@ struct dxf_container* dxf_add_container(struct dxf* const dxf, const char *name,
 struct dxf_container* dxf_get_container(struct dxf* const dxf, const char *name, int type)
 {
     struct dxf_container *container;
+    struct dxf_container *head;
     struct dxf_container **specific_last_accessed_container;
 
     switch (type) {
         case DXF_LAYER:
             specific_last_accessed_container = &(dxf->last_accessed_layer);
+            head = dxf->layers;
             break;
         case DXF_BLOCK:
             specific_last_accessed_container = &(dxf->last_accessed_block);
+            head = dxf->blocks;
             break;
         default:
             errprint("dxf: Bad container type.");
@@ -160,16 +166,16 @@ struct dxf_container* dxf_get_container(struct dxf* const dxf, const char *name,
 
     if (strcmp((*specific_last_accessed_container)->name, name) == 0) {
         container = *specific_last_accessed_container;
-        dbgprint("dxf: Layer found (fast fetch) @0x%lx, name=%s, entities=@0x%lx, next=@0x%lx \n",
+        dbgprint("dxf: Container found (fast fetch) @0x%lx, name=%s, entities=@0x%lx, next=@0x%lx \n",
             (unsigned long)container, container->name, 
             (unsigned long)(container->entities), (unsigned long)(container->next));
         return container;
     }
 
-    for (container = *specific_last_accessed_container; container != NULL; container = container->next) {
+    for (container = head; container != NULL; container = container->next) {
         if (strcmp(container->name, name) == 0) {
             *specific_last_accessed_container = container;
-            dbgprint("dxf: Layer found @0x%lx, name=%s, entities=@0x%lx, next=@0x%lx \n",
+            dbgprint("dxf: Container found @0x%lx, name=%s, entities=@0x%lx, next=@0x%lx \n",
                     (unsigned long)container, container->name, 
                     (unsigned long)(container->entities), (unsigned long)(container->next));
             return container;

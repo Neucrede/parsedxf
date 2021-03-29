@@ -20,7 +20,7 @@ static struct hashtable parsers;
 
 static unsigned int str_hash(const char **psz);
 static int str_cmp(const char **psz1, const char **psz2);
-static int register_parser(const char **entity_name, pfn_parser_t parser);
+static int register_parser(const char **object_name, pfn_parser_t parser);
 static int dummy_parser_hook(struct dxf_entity* entity);
 static int parse_endxxx(struct dxf_parser_desc* const parser_desc);
 static int parse_point(struct dxf_parser_desc* const parser_desc);
@@ -41,7 +41,7 @@ static int parse_entities(struct dxf_parser_desc* const parser_desc);
         if (parser_desc->target_block != NULL) { \
             dxf_add_entity(dxf, parser_desc->target_block->name, (struct dxf_entity*)entity, DXF_ADD_ENTITY_TO_BLOCK); \
         } \
-        parser_desc->entity_after_parse_hooks[entity_type]((struct dxf_entity*)entity); \
+        parser_desc->entity_post_parse_hooks[entity_type]((struct dxf_entity*)entity); \
         return 0; \
     case DXF_LAYER_NAME: \
         if (parser_desc->target_layer == NULL) { \
@@ -66,9 +66,9 @@ static int str_cmp(const char **psz1, const char **psz2) {
     return strcmp(*psz1, *psz2);
 }
 
-static int register_parser(const char **entity_name, pfn_parser_t parser)
+static int register_parser(const char **object_name, pfn_parser_t parser)
 {
-    return hashtable_put(&parsers, (void*)entity_name, HASHTABLE_COPY_VALUE, sizeof(char*),
+    return hashtable_put(&parsers, (void*)object_name, HASHTABLE_COPY_VALUE, sizeof(char*),
         &parser, HASHTABLE_COPY_VALUE, sizeof(pfn_parser_t));
 }
 
@@ -525,21 +525,21 @@ int dxf_parser_init_desc(struct dxf_parser_desc* const parser_desc,
     parser_desc->target_layer = NULL;
 
     for (i = 0; i < DXF_ENTITY_TYPES_COUNT; ++i) {
-        parser_desc->entity_after_parse_hooks[i] = dummy_parser_hook;
+        parser_desc->entity_post_parse_hooks[i] = dummy_parser_hook;
     }
     
     return 0;
 }
 
-int dxf_parser_set_entity_after_parse_hook(struct dxf_parser_desc* const parser_desc,
+int dxf_parser_set_entity_post_parse_hook(struct dxf_parser_desc* const parser_desc,
                                             int entity_type,
-                                            pfn_entity_after_parse_hook_t hook)
+                                            pfn_entity_post_parse_hook_t hook)
 {
     if ((entity_type < DXF_ENTITY_TYPE_START) || (entity_type > DXF_ENTITY_TYPE_END)) {
         return -1;
     }
 
-    parser_desc->entity_after_parse_hooks[entity_type] = hook;
+    parser_desc->entity_post_parse_hooks[entity_type] = hook;
     return 0;
 }
 
