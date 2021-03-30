@@ -134,6 +134,21 @@ struct dxf_arc {
     double angle_end;
 };
 
+struct dxf_insert {
+    struct dxf_entity header;
+    double x;
+    double y;
+    double z;
+    double x_scale;
+    double y_scale;
+    double z_scale;
+    double angle;
+    int column_count;
+    int row_count;
+    double column_spacing;
+    double row_spacing;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -30,6 +30,8 @@ static int init_entity(struct dxf_entity* const entity)
     struct dxf_line *line = (struct dxf_line*)entity;
     struct dxf_circle *circle = (struct dxf_circle*)entity;
     struct dxf_lwpolyline *lwpolyline = (struct dxf_lwpolyline*)entity;
+    struct dxf_arc *arc = (struct dxf_arc*)entity;
+    struct dxf_insert *insert = (struct dxf_insert*)entity;
 
     switch (entity->type) {
         case DXF_POINT:
@@ -47,6 +49,16 @@ static int init_entity(struct dxf_entity* const entity)
             lwpolyline->number_of_vertices = 0;
             lwpolyline->vertices = NULL;
             lwpolyline->tail_vertex = NULL;
+            return 0;
+        case DXF_ARC:
+            arc->x = arc->y = arc->z = arc->r = 0.0;
+            arc->angle_start = arc->angle_end = 0.0;
+            return 0;
+        case DXF_INSERT:
+            insert->x = insert->y = insert->z = insert->angle = 0.0;
+            insert->x_scale = insert->y_scale = insert->z_scale = 1.0;
+            insert->column_count = insert->row_count = 1;
+            insert->column_spacing = insert->row_spacing = 0.0; 
             return 0;
         default:
             return -1;
@@ -291,6 +303,9 @@ struct dxf_entity* dxf_alloc_entity(struct dxf* const dxf, int entity_type)
             break;
         case DXF_ARC:
             size = sizeof(struct dxf_arc);
+            break;
+        case DXF_INSERT:
+            size = sizeof(struct dxf_insert);
             break;
         default:
             errprint("dxf: Could not allocate space for entity type %d. \n", entity_type);
