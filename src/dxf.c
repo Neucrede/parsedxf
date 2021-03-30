@@ -289,6 +289,9 @@ struct dxf_entity* dxf_alloc_entity(struct dxf* const dxf, int entity_type)
         case DXF_LWPOLYLINE:
             size = sizeof(struct dxf_lwpolyline);
             break;
+        case DXF_ARC:
+            size = sizeof(struct dxf_arc);
+            break;
         default:
             errprint("dxf: Could not allocate space for entity type %d. \n", entity_type);
             return NULL;

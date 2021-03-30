@@ -124,6 +124,16 @@ struct dxf_lwpolyline {
     struct dxf_lwpolyline_vertex *tail_vertex;
 };
 
+struct dxf_arc {
+    struct dxf_entity header;
+    double x;
+    double y;
+    double z;
+    double r;
+    double angle_start;
+    double angle_end;
+};
+
 #ifdef __cplusplus
 extern "C" {
 #endif

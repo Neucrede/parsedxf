@@ -9,7 +9,22 @@ static const char *str_point = "POINT";
 static const char *str_line = "LINE";
 static const char *str_circle = "CIRCLE";
 static const char *str_lwpolyline = "LWPOLYLINE";
+static const char *str_arc = "ARC";
+static const char *str_insert = "INSERT";
+static const char *str_ellipse = "ELLIPSE";
+static const char *str_hatch = "HATCH";
+static const char *str_mtext = "MTEXT";
+static const char *str_text = "TEXT";
+static const char *str_solid = "SOLID";
+static const char *str_spline = "SPLINE";
 static const char *str_block = "BLOCK";
+static const char *str_header = "HEADER";
+static const char *str_classes = "CLASSES";
+static const char *str_tables = "TABLES";
+static const char *str_blocks = "BLOCKS";
+static const char *str_entities = "ENTITIES";
+static const char *str_objects = "OBJECTS";
+static const char *str_thumbnailimage = "THUMBNAILIMAGE";
 static const char *str_endblk = "ENDBLK";
 static const char *str_endsec = "ENDSEC";
 static const char *str_endtab = "ENDTAB";
@@ -27,6 +42,8 @@ static int parse_point(struct dxf_parser_desc* const parser_desc);
 static int parse_line(struct dxf_parser_desc* const parser_desc);
 static int parse_circle(struct dxf_parser_desc* const parser_desc);
 static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc);
+static int parse_arc(struct dxf_parser_desc* const parser_desc);
+static int parse_insert(struct dxf_parser_desc* const parser_desc);
 static int parse_block(struct dxf_parser_desc* const parser_desc);
 static int parse_blocks(struct dxf_parser_desc* const parser_desc);
 static int parse_entities(struct dxf_parser_desc* const parser_desc);
@@ -180,7 +197,6 @@ static int parse_circle(struct dxf_parser_desc* const parser_desc)
     struct dxf_token* const token = &(lexer_desc->token);
     struct dxf* const dxf = parser_desc->dxf;
     struct dxf_circle* circle;
-    int number_of_coord_values_read = 0;
     
     dbgprint("dxf_parser: Circle entity \n");
     
@@ -194,21 +210,17 @@ static int parse_circle(struct dxf_parser_desc* const parser_desc)
             case DXF_X:
                 dbgprint("x=%f \n", token->value.f);
                 circle->x = token->value.f;
-                ++number_of_coord_values_read;
                 break;
             case DXF_Y:
                 dbgprint("y=%f \n", token->value.f);
                 circle->y = token->value.f;
-                ++number_of_coord_values_read;
                 break;
             case DXF_Z:
                 dbgprint("z=%f \n", token->value.f);
                 circle->z = token->value.f;
-                ++number_of_coord_values_read;
                 break;
             case DXF_FLOAT:
-                /* Z coordinate value could be omitted. */
-                if (number_of_coord_values_read >= 2) {
+                if (token->group_code == 40) {
                     dbgprint("r=%f \n", token->value.f);
                     circle->r = token->value.f;
                 }
@@ -308,6 +320,65 @@ static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
     }
     
     return -1;
+}
+
+static int parse_arc(struct dxf_parser_desc* const parser_desc)
+{
+    struct dxf_lexer_desc* const lexer_desc = parser_desc->lexer_desc;
+    struct dxf_token* const token = &(lexer_desc->token);
+    struct dxf* const dxf = parser_desc->dxf;
+    struct dxf_arc* arc;
+    
+    dbgprint("dxf_parser: Arc entity \n");
+    
+    if ((arc = (struct dxf_arc*)dxf_alloc_entity(dxf, DXF_ARC)) == NULL) {
+        return -1;
+    }
+    
+    while (dxf_lexer_get_token(lexer_desc) == 0) {
+        switch (token->tag) {
+            DXF_PARSER_ENTITY_PARSER_COMMON_ACTIONS(parser_desc, lexer_desc, token, arc, DXF_ARC);
+            case DXF_X:
+                dbgprint("x=%f \n", token->value.f);
+                arc->x = token->value.f;
+                break;
+            case DXF_Y:
+                dbgprint("y=%f \n", token->value.f);
+                arc->y = token->value.f;
+                break;
+            case DXF_Z:
+                dbgprint("z=%f \n", token->value.f);
+                arc->z = token->value.f;
+                break;
+            case DXF_FLOAT:
+                if (token->group_code == 40) {
+                    dbgprint("r=%f \n", token->value.f);
+                    arc->r = token->value.f;
+                }
+                break;
+            case DXF_ANGLE:
+                if (token->group_code == 50) {
+                    dbgprint("angle_start=%f \n", token->value.f);
+                    arc->angle_start = token->value.f;
+                }
+                else if (token->group_code == 51) {
+                    dbgprint("angle_end=%f \n", token->value.f);
+                    arc->angle_end = token->value.f;
+                }
+                break;
+            default:
+                break;
+        }
+    }
+    
+    return -1;
+}
+
+static int parse_insert(struct dxf_parser_desc* const parser_desc)
+{
+    struct dxf_lexer_desc* const lexer_desc = parser_desc->lexer_desc;
+    struct dxf_token* const token = &(lexer_desc->token);
+    struct dxf* const dxf = parser_desc->dxf;
 }
 
 static int parse_block(struct dxf_parser_desc* const parser_desc)
@@ -503,8 +574,10 @@ int dxf_parser_init()
     register_parser(&str_line, parse_line);
     register_parser(&str_circle, parse_circle);
     register_parser(&str_lwpolyline, parse_lwpolyline);
-
+    register_parser(&str_arc, parse_arc);
+    register_parser(&str_insert, parse_insert);
     register_parser(&str_block, parse_block);
+    
     register_parser(&str_endblk, parse_endxxx);
     register_parser(&str_endsec, parse_endxxx);
     register_parser(&str_endtab, parse_endxxx);

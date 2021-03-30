@@ -321,17 +321,6 @@ static int scan_string(struct dxf_lexer_desc* const desc, char **buf)
         return -1;
     }
     
-    /*
-    if ((desc->token.value.str = (char*)crapool_alloc(desc->pool, len + 1)) == NULL) {
-        return -1;
-    }
-    memcpy(desc->token.value.str, desc->line_buf, len + 1);
-    
-    if (buf != NULL) {
-        memcpy(*buf, desc->line_buf, len + 1);
-    }
-    */
-    
     desc->token.value.str = desc->line_buf;
     
     return 0;
