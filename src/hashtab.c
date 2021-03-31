@@ -1,9 +1,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "hashtab.h"
-#include "dbgprint.h"
 
-#define NO_DBGPRINT
+#include "dbgprint.h"
 
 static int default_keycmp(const void** const src, const void** const dest);
 static size_t inflate_len(size_t p);

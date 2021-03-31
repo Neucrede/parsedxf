@@ -88,8 +88,9 @@ static int str_cmp(const char **psz1, const char **psz2) {
 
 static int register_parser(const char **object_name, pfn_parser_t parser)
 {
-    return hashtable_put(&parsers, (void*)object_name, HASHTABLE_COPY_VALUE, sizeof(char*),
-        &parser, HASHTABLE_COPY_VALUE, sizeof(pfn_parser_t));
+    return hashtable_put(&parsers, 
+                        (void*)object_name, HASHTABLE_COPY_VALUE, sizeof(char*),
+                        &parser, HASHTABLE_COPY_VALUE, sizeof(pfn_parser_t));
 }
 
 static int dummy_parser_hook(struct dxf_entity* entity)
@@ -101,6 +102,8 @@ static int dummy_parser_hook(struct dxf_entity* entity)
 static int parse_endxxx(struct dxf_parser_desc* const parser_desc)
 {
     (void)parser_desc;
+    
+    /* Returning 1 indicates that we have met an end-of-object tag. */
     return ((((( 1 )))));
 }
 
@@ -389,6 +392,7 @@ static int parse_insert(struct dxf_parser_desc* const parser_desc)
     struct dxf* const dxf = parser_desc->dxf;
 
     struct dxf_insert *insert;
+    struct dxf_layer *layer_of_block = NULL;
 
     dbgprint("dxf_parser: Insert entity \n");
 
@@ -402,12 +406,13 @@ static int parse_insert(struct dxf_parser_desc* const parser_desc)
             case DXF_BLOCK_NAME:
                 dbgprint("blockname=%s \n", token->value.str);
                 if ((insert->header.block = dxf_get_block(dxf, token->value.str)) != NULL) {
-                    if (insert->header.block->entities[0] != NULL) {
-                        dxf_add_entity(dxf, insert->header.block->entities[0]->layer->name,
+                    layer_of_block = insert->header.block->parent;
+                    if (layer_of_block != NULL) {
+                        dxf_add_entity(dxf, layer_of_block->name,
                             (struct dxf_entity*)insert, DXF_ADD_ENTITY_TO_LAYER);
                     }
                     else {
-                        errprint("dxf_parser: WARNING: Block %s contains no entity. \n", token->value.str);
+                        errprint("dxf_parser: WARNING: Block %s did not attached to a layer. \n", token->value.str);
                     }
                 }
                 else {
@@ -534,7 +539,7 @@ static int parse_block(struct dxf_parser_desc* const parser_desc)
             case DXF_BLOCK_NAME:
                 dbgprint("block=%s \n", token->value.str);
                 if ((parser_desc->target_block = dxf_get_block(dxf, token->value.str)) == NULL) {
-                    if (dxf_add_block(dxf, token->value.str) == NULL) {
+                    if (dxf_add_block(dxf, token->value.str, parser_desc->target_layer) == NULL) {
                         return -1;
                     }
                     parser_desc->target_block = dxf_get_block(dxf, token->value.str);

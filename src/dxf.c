@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "dxf.h"
+
 #include "dbgprint.h"
 
 static unsigned int str_hash(const char **psz);
@@ -94,7 +95,8 @@ int dxf_init(struct dxf* const dxf, size_t pool_size)
     return 0;
 }
 
-struct dxf_container* dxf_add_container(struct dxf* const dxf, const char *name, int type)
+struct dxf_container* dxf_add_container(struct dxf* const dxf, const char *name, 
+                                        struct dxf_layer* parent_layer, int type)
 {
     struct dxf_container *container;
     struct dxf_container *head_old;
@@ -133,12 +135,14 @@ struct dxf_container* dxf_add_container(struct dxf* const dxf, const char *name,
             container->next = head_old;
             dxf->layers = container;
             dxf->last_accessed_layer = container;
+            container->parent = NULL;
             break;
         case DXF_BLOCK:
             head_old = dxf->blocks;
             container->next = head_old;
             dxf->blocks = container;
             dxf->last_accessed_block = container;
+            container->parent = (struct dxf_container*)parent_layer;
             break;
         default:
             errprint("dxf: Bad container type %d. Control flow was messed up. \n", type);
@@ -233,7 +237,7 @@ int dxf_add_entity(struct dxf* const dxf, const char* container_name,
     }
 
     if ((container = dxf_get_container(dxf, container_name, container_type)) == NULL) {
-        if ((container = dxf_add_container(dxf, container_name, container_type)) == NULL) {
+        if ((container = dxf_add_container(dxf, container_name, NULL, container_type)) == NULL) {
             errprint("dxf: Failed to allocate pool space for storing container struct. \n");
             return -1;
         }

@@ -4,6 +4,7 @@
 #include <string.h>
 #include "dxf_lexer.h"
 #include "memmap.h"
+
 #include "dbgprint.h"
 
 #define GROUP_CODE_TAG_XLAT_TAB_LEN 127
