@@ -14,6 +14,10 @@
 #define HASHTABLE_COPY_VALUE 0
 #define HASHTABLE_COPY_MEMORY 1
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef unsigned int (*pfn_hash_t)(const void* const);
 typedef int (*pfn_keycmp_t)(const void** const, const void** const);
 
@@ -56,10 +60,6 @@ struct hashtable {
 #endif
 #endif
 };
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 int hashtable_create(struct hashtable* const hashtab, size_t len, float load_factor, 
                     size_t pool_size, pfn_hash_t hash_fcn, pfn_keycmp_t keycmp_fcn);
