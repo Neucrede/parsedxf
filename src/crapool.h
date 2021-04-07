@@ -12,10 +12,6 @@
 #define CRAPOOL_SIZE_MIN 4096
 #define CRAPOOL_SKIP_EXAMING_SIZE_THRESHOLD 32
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct crapool_desc;
 struct crapool_desc {
     size_t free_space;
@@ -28,6 +24,10 @@ struct crapool_desc {
     pthread_mutex_t *mutex;
 #endif
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct crapool_desc* crapool_create(size_t size, void* const mutex);
 void* crapool_alloc(struct crapool_desc* const desc, size_t size);

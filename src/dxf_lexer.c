@@ -380,6 +380,7 @@ int dxf_lexer_open_desc(struct dxf_lexer_desc* const desc, const char *filename,
                         struct crapool_desc* const pool)
 {
     memmap_fd_t fd;
+    memmap_fd_t fd2;
     size_t file_len;
     
     fd = memmap_open(filename, O_RDONLY, 0);
@@ -390,10 +391,12 @@ int dxf_lexer_open_desc(struct dxf_lexer_desc* const desc, const char *filename,
     }
     
     file_len = memmap_get_file_size(fd);
-    desc->buf = (const char*)memmap_map(NULL, file_len, MEMMAP_READ, MEMMAP_SHARED, fd, 0);
+    desc->buf = (const char*)memmap_map(NULL, file_len, MEMMAP_READ, 
+        MEMMAP_SHARED, fd, 0, &fd2);
     
     if (desc->buf != NULL) {
         desc->fd = fd;
+        desc->fd2 = fd2;
         desc->cur = desc->buf;
         desc->prev = desc->cur;
         desc->end = (const char*)(desc->buf + file_len - 1);
@@ -420,7 +423,7 @@ int dxf_lexer_close_desc(struct dxf_lexer_desc* const desc, int destroy_pool)
 
     if (desc->fd != (memmap_fd_t)(-1)) {
         file_len = memmap_get_file_size(desc->fd);
-        memmap_unmap((void*)(desc->buf), file_len);
+        memmap_unmap((void*)(desc->buf), file_len, desc->fd2);
         memmap_close(desc->fd);
     }
     

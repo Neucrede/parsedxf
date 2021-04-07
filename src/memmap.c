@@ -40,7 +40,8 @@ int memmap_close(memmap_fd_t fd)
     return CloseHandle((HANDLE)fd) != 0 ? 0 : -1;
 }
 
-void* memmap_map(void *address, size_t length, int protect, int flags, memmap_fd_t fd, off_t offset)
+void* memmap_map(void *address, size_t length, int protect, int flags, 
+    memmap_fd_t fd, off_t offset, memmap_fd_t* const fd2)
 {
     HANDLE mapobj;
     void *map_addr;
@@ -65,6 +66,8 @@ void* memmap_map(void *address, size_t length, int protect, int flags, memmap_fd
         return NULL;
     }
 
+    *fd2 = mapobj;
+    
     map_addr = MapViewOfFileEx(
             mapobj, 
             access, 
@@ -76,11 +79,12 @@ void* memmap_map(void *address, size_t length, int protect, int flags, memmap_fd
     return map_addr;
 }
 
-int memmap_unmap(void *addr, size_t length)
+int memmap_unmap(void *addr, size_t length, memmap_fd_t fd2)
 {
     (void)length;
 
-    return UnmapViewOfFile(addr) != 0 ? 0 : -1;
+    UnmapViewOfFile(addr);
+    return CloseHandle((HANDLE)fd2) != 0 ? 0 : -1;
 }
 
 int memmap_sync(void *addr, size_t length, int flags)
@@ -110,7 +114,8 @@ int memmap_close(memmap_fd_t fd)
     return close(fd);
 }
 
-void* memmap_map(void *address, size_t length, int protect, int flags, memmap_fd_t fd, off_t offset)
+void* memmap_map(void *address, size_t length, int protect, int flags, 
+    memmap_fd_t fd, off_t offset, memmap_fd_t* const fd2)
 {
     size_t file_len;
 
@@ -121,10 +126,14 @@ void* memmap_map(void *address, size_t length, int protect, int flags, memmap_fd
         file_len = memmap_get_file_size(fd);
         return mmap(address, file_len, protect, flags, fd, offset);
     }
+    
+    (void)fd2;
 }
 
-int memmap_unmap(void *addr, size_t length)
+int memmap_unmap(void *addr, size_t length, memmap_fd_t fd2)
 {
+    (void)fd2;
+    
     return munmap(addr, length);
 }
 

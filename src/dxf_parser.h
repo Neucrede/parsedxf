@@ -4,10 +4,6 @@
 #include "dxf.h"
 #include "dxf_lexer.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef int(*pfn_entity_post_parse_hook_t)(struct dxf_entity*);
 
 struct dxf_parser_desc {
@@ -18,6 +14,10 @@ struct dxf_parser_desc {
     pfn_entity_post_parse_hook_t entity_post_parse_hooks[DXF_ENTITY_TYPES_COUNT];
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
 int dxf_parser_init();
 int dxf_parser_init_desc(struct dxf_parser_desc* const parser_desc,
                         struct dxf_lexer_desc* const lexer_desc,

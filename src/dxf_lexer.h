@@ -73,10 +73,6 @@
 #define DXF_EXT_DATA_INTEGER16 60
 #define DXF_EXT_DATA_INTEGER32 61
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct dxf_lexer_desc;
 typedef int (*pfn_scanner_t)(struct dxf_lexer_desc* const, void*);
 
@@ -105,6 +101,7 @@ struct dxf_lexer_desc {
     const char *prev;
     const char *end;
     memmap_fd_t fd;
+    memmap_fd_t fd2;
     char line_buf[DXF_LEXER_LINE_BUFFER_SIZE];
     struct crapool_desc *pool;
     struct dxf_token token;
@@ -113,6 +110,10 @@ struct dxf_lexer_desc {
 extern const struct dxf_group_code_desc dxf_invalid_desc;
 extern const struct dxf_group_code_desc dxf_group_code_descs[];
 extern const struct dxf_token dxf_invalid_token;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int dxf_lexer_init();
 int dxf_lexer_init_desc(struct dxf_lexer_desc* const desc, const char *buf,

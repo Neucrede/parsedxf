@@ -34,10 +34,6 @@
 #define DXF_ADD_ENTITY_TO_LAYER 0
 #define DXF_ADD_ENTITY_TO_BLOCK 1
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 struct dxf_entity;
 struct dxf_container;
 
@@ -66,8 +62,8 @@ struct dxf {
 };
 
 struct dxf_entity {
-    const size_t size = (size_t)(-1);
-    const int type = DXF_ENTITY_TYPE_END + 1;
+    size_t size;
+    int type;
     struct dxf_layer *layer;
     struct dxf_block *block;
     struct dxf_entity *next;
@@ -156,6 +152,10 @@ struct dxf_insert {
     double row_spacing;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+    
 int dxf_init(struct dxf* const dxf, size_t pool_size);
 int dxf_free(struct dxf* const dxf);
 struct dxf_container* dxf_add_container(struct dxf* const dxf, const char *name, 
