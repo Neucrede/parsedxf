@@ -157,6 +157,7 @@ extern "C" {
 #endif
     
 int dxf_init(struct dxf* const dxf, size_t pool_size);
+int dxf_free(struct dxf* const dxf);
 struct dxf_container* dxf_add_container(struct dxf* const dxf, const char *name, 
                                         struct dxf_layer* parent_layer, int type);
 struct dxf_container* dxf_get_container(struct dxf* const dxf, const char *name, int type);

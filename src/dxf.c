@@ -95,6 +95,11 @@ int dxf_init(struct dxf* const dxf, size_t pool_size)
     return 0;
 }
 
+int dxf_free(struct dxf* const dxf)
+{
+    return crapool_destroy(dxf->pool);
+}
+
 struct dxf_container* dxf_add_container(struct dxf* const dxf, const char *name, 
                                         struct dxf_layer* parent_layer, int type)
 {
