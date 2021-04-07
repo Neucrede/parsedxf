@@ -13,6 +13,7 @@ int GetLastError()
 int main()
 {
     memmap_fd_t fd;
+    memmap_fd_t fd2;
     char *sz;
     char *sz2 = "AHDHDHDHHHEI";
 
@@ -20,7 +21,7 @@ int main()
     printf("memmap_open: %d\n", GetLastError());
 
     sz = (char*)memmap_map(NULL, 16, MEMMAP_READWRITE, MEMMAP_SHARED,
-            fd, 0);
+            fd, 0, &fd2);
     printf("%s\n", sz);
     sz[0] = 'D';
     printf("%s\n", sz);
@@ -34,7 +35,7 @@ int main()
     memmap_sync(sz, 0, MEMMAP_SYNC);
     printf("memmap_sync: %d\n", GetLastError());
 
-    memmap_unmap(sz, 16);
+    memmap_unmap(sz, 16, fd2);
     printf("memmap_unmap: %d\n", GetLastError());
 
     memmap_close(fd);
