@@ -5,6 +5,8 @@
 #include "hashtab.h"
 #include "dbgprint.h"
 
+static int initialized = 0;
+
 static struct hashtable parsers;
 typedef int(*pfn_parser_t)(struct dxf_parser_desc* const);
 
@@ -671,6 +673,10 @@ static int parse_entities(struct dxf_parser_desc* const parser_desc)
 
 int dxf_parser_init()
 {
+    if (initialized == 1) {
+        return 0;
+    }
+    
     if (hashtable_create(&parsers, 0, 0, 0, (pfn_hash_t)str_hash, (pfn_keycmp_t)str_cmp) != 0) {
         errprint("dxf_parser: hashtable_init() failed. \n");
         return -1;
@@ -693,6 +699,7 @@ int dxf_parser_init()
     register_parser(&str_seqend, parse_endxxx);
     register_parser(&str_eof, parse_endxxx);
 
+    initialized = 1;
     return 0;
 }
 

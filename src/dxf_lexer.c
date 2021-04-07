@@ -111,6 +111,7 @@ const struct dxf_group_code_desc dxf_group_code_descs[] = {
 };
 
 const struct dxf_token dxf_invalid_token = { DXF_INVALID_TAG, -1, { NULL }};
+static int initialized;
 
 static int xlat_tab_init()
 {
@@ -338,10 +339,15 @@ static int scan_binary(struct dxf_lexer_desc* const desc, void **buf)
 
 int dxf_lexer_init()
 {
+    if (initialized == 1) {
+        return 0;
+    }
+    
     if (xlat_tab_init() != 0) {
         return -1;
     }
 
+    initialized = 1;
     return 0;
 }
 
