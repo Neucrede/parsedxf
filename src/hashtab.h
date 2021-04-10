@@ -1,11 +1,18 @@
 #ifndef __HASHTAB_H__
 #define __HASHTAB_H__
 
-#include "crapool.h"
+#ifdef _MSC_VER
+#define __INT64_T__ __int64
+#else
+#include <stdint.h>
+#define __INT64_T__ int64_t
+#endif
 
 #ifdef USE_PTHREAD
     #include <pthread.h>
 #endif
+
+#include "crapool.h"
 
 #define HASHTABLE_DEFAULT_LOAD_FACTOR 0.75f
 #define HASHTABLE_DEFAULT_LEN 67
@@ -25,7 +32,7 @@ struct hashtable_entry {
         char c;
         int i;
         long l;
-        long long ll;
+        __INT64_T__ ll;
         float f;
         double d;
         char *p;
@@ -34,7 +41,7 @@ struct hashtable_entry {
         char c;
         int i;
         long l;
-        long long ll;
+        __INT64_T__ ll;
         float f;
         double d;
         char *p;
