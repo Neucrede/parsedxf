@@ -98,7 +98,18 @@ int dxf_init(struct dxf* const dxf, size_t pool_size)
 
 int dxf_free(struct dxf* const dxf)
 {
-    return crapool_destroy(dxf->pool);
+    if (dxf->pool != NULL) {
+        crapool_destroy(dxf->pool);
+    }
+
+    hashtable_destroy(&(dxf->header));
+    
+    dxf->pool = NULL;
+    dxf->layers = NULL;
+    dxf->last_accessed_layer = NULL;
+    dxf->blocks = NULL;
+    dxf->last_accessed_block = NULL;
+    return 0;
 }
 
 struct dxf_container* dxf_add_container(struct dxf* const dxf, const char *name, 

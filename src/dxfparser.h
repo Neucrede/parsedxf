@@ -2,7 +2,7 @@
 #define __DXF_PARSER_H__
 
 #include "dxf.h"
-#include "dxf_lexer.h"
+#include "dxflexer.h"
 
 typedef int(*pfn_entity_post_parse_hook_t)(struct dxf_entity*);
 

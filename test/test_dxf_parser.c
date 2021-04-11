@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "dxf.h"
-#include "dxf_lexer.h"
-#include "dxf_parser.h"
+#include "dxflexer.h"
+#include "dxfparser.h"
 
 int main(int argc, char *argv[])
 {

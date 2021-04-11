@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "dxf_parser.h"
+#include "dxfparser.h"
 #include "hashtab.h"
 #include "dbgprint.h"
 

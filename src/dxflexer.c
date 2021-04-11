@@ -2,7 +2,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include "dxf_lexer.h"
+#include "dxflexer.h"
 #include "memmap.h"
 
 #include "dbgprint.h"

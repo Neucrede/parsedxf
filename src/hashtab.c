@@ -334,8 +334,14 @@ int hashtable_destroy(struct hashtable* const hashtab)
 
     dbgprint("hashtab: Destroying hashtable @0x%lx. \n", (unsigned long)hashtab);
 
-    free(hashtab->table);
-    crapool_destroy(hashtab->pool);
+    if (hashtab->table != NULL) {
+        free(hashtab->table);
+    }
+
+    if (hashtab->pool != NULL) {
+        crapool_destroy(hashtab->pool);
+    }
+
     hashtab->table = NULL;
     hashtab->pool = NULL;
 

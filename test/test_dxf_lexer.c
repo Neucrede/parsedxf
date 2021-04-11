@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "dxf_lexer.h"
+#include "dxflexer.h"
 
 int main() {
     struct dxf_lexer_desc desc;
