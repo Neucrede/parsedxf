@@ -91,8 +91,8 @@ static int str_cmp(const char **psz1, const char **psz2) {
 static int register_parser(const char **object_name, pfn_parser_t parser)
 {
     return hashtable_put(&parsers, 
-                        (void*)object_name, HASHTABLE_COPY_VALUE, sizeof(char*),
-                        &parser, HASHTABLE_COPY_VALUE, sizeof(pfn_parser_t));
+                        (void*)object_name, sizeof(char*),
+                        &parser, sizeof(pfn_parser_t));
 }
 
 static int dummy_parser_hook(struct dxf_entity* entity)
@@ -677,7 +677,8 @@ int dxf_parser_init()
         return 0;
     }
     
-    if (hashtable_create(&parsers, 0, 0, 0, (pfn_hash_t)str_hash, (pfn_keycmp_t)str_cmp) != 0) {
+    if (hashtable_create(&parsers, 0, 0, 0, HASHTABLE_COPY_VALUE,
+        HASHTABLE_COPY_VALUE, (pfn_hash_t)str_hash, (pfn_keycmp_t)str_cmp) != 0) {
         errprint("dxf_parser: hashtable_init() failed. \n");
         return -1;
     }

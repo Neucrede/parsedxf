@@ -52,8 +52,11 @@ struct hashtable {
     size_t len;
     size_t occupied;
     size_t inflate_threshold;
+    double load_factor;
     struct crapool_desc *pool;
     struct hashtable_entry **table;
+    int key_copy_mode;
+    int value_copy_mode;
     pfn_hash_t hash_fcn;
     pfn_keycmp_t keycmp_fcn;
     
@@ -68,10 +71,11 @@ struct hashtable {
 extern "C" {
 #endif
     
-int hashtable_create(struct hashtable* const hashtab, size_t len, float load_factor, 
-                    size_t pool_size, pfn_hash_t hash_fcn, pfn_keycmp_t keycmp_fcn);
-int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode, size_t key_size,
-                    void *value, int value_copy_mode, size_t value_size);
+int hashtable_create(struct hashtable* const hashtab, size_t len, double load_factor, 
+                    size_t pool_size, int key_copy_mode, int value_copy_mode, 
+                    pfn_hash_t hash_fcn, pfn_keycmp_t keycmp_fcn);
+int hashtable_put(struct hashtable* const hashtab, void *key, size_t key_size, 
+                  void *value, size_t value_size);
 void* hashtable_get(struct hashtable* const hashtab, void *key);
 int hashtable_destroy(struct hashtable* const hashtab);
 

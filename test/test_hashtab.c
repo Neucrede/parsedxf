@@ -31,6 +31,7 @@ int main(int argc, char* argv[])
     char *sz2 = "fhfhfhhifeieifew";
     char *sz3 = "jfiqwejqioew";
     
+    /* imcompatible with new one
     if (hashtable_create(&hashtab, 0, 0, 0, (pfn_hash_t)str_hash, (pfn_keycmp_t)str_cmp) != 0) {
         printf("hashtable_init() failed. \n");
         return 1;
@@ -46,6 +47,7 @@ int main(int argc, char* argv[])
     printf("%s \n", *(char**)hashtable_get(&hashtab, &key1));
     printf("%s \n", *(char**)hashtable_get(&hashtab, &key2));
     printf("%s \n", *(char**)hashtable_get(&hashtab, &key3));
-    
+    */
+
     return 0;
 }

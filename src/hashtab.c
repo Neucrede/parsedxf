@@ -43,7 +43,43 @@ static size_t inflate_len(size_t s)
 
 static int inflate(struct hashtable* const hashtab)
 {
-    hashtab->occupied = 0;
+    size_t old_len = hashtab->len;
+    size_t new_len = inflate_len(old_len);
+    struct hashtable_entry **old_table = hashtab->table;
+    struct hashtable_entry **new_table;
+    struct hashtable_entry *entry;
+    unsigned int slot, new_slot;
+    unsigned int new_hash;
+    unsigned int new_occupied = 0;
+
+    if ((new_table = 
+        (struct hashtable_entry**)calloc(new_len, sizeof(struct hashtable_entry*))) == NULL) 
+    {
+        dbgprint("hashtab: Failed to allocate space for new table entries. \n");
+        return -1;
+    }
+
+    for (slot = 0; slot < old_len; ++slot) {
+        for (entry = old_table[slot]; entry != NULL; entry = entry->next) {
+            new_hash = hashtab->hash_fcn(&(entry->key));
+            new_slot = new_hash % new_len;
+            entry->hash = new_hash;
+
+            if (new_table[new_slot] == NULL) {
+                ++new_occupied;
+            }
+
+            entry->next = new_table[new_slot];
+            new_table[new_slot] = entry;
+        }
+    }
+
+    free(old_table);
+    hashtab->len = new_len;
+    hashtab->table = new_table;
+    hashtab->inflate_threshold = (size_t)(new_len * hashtab->load_factor);
+    hashtab->occupied = new_occupied;
+
     return 0;
 }
 
@@ -75,10 +111,19 @@ static int put_value(struct crapool_desc* const pool, struct hashtable_entry* co
     }
 }
 
-int hashtable_create(struct hashtable* const hashtab, size_t len, float load_factor, 
-                    size_t pool_size, pfn_hash_t hash_fcn, pfn_keycmp_t keycmp_fcn)
+int hashtable_create(struct hashtable* const hashtab, size_t len, double load_factor, 
+                    size_t pool_size, int key_copy_mode, int value_copy_mode, 
+                    pfn_hash_t hash_fcn, pfn_keycmp_t keycmp_fcn)
 {
     if ((hashtab == NULL) || (hash_fcn == NULL)) {
+        return -1;
+    }
+
+    if (((key_copy_mode != HASHTABLE_COPY_VALUE) &&
+        (key_copy_mode != HASHTABLE_COPY_MEMORY)) ||
+        ((value_copy_mode != HASHTABLE_COPY_VALUE) &&
+        (value_copy_mode != HASHTABLE_COPY_MEMORY)))
+    {
         return -1;
     }
     
@@ -97,7 +142,7 @@ int hashtable_create(struct hashtable* const hashtab, size_t len, float load_fac
     if (pool_size < HASHTABLE_MIN_POOL_SIZE) {
         pool_size = HASHTABLE_DEFAULT_POOL_SIZE;
     }
-    
+
 #if defined(USE_PTHREAD) && defined(HASHTAB_RWLOCK_ENABLED)
 #if (HASHTAB_RWLOCK_ENABLED == 1)
     pthread_rwlock_init(&hashtab->rwlock, NULL);
@@ -119,20 +164,24 @@ int hashtable_create(struct hashtable* const hashtab, size_t len, float load_fac
     hashtab->len = len;
     hashtab->occupied = 0;
     hashtab->inflate_threshold = (size_t)(load_factor * len);
+    hashtab->load_factor = load_factor;
     hashtab->hash_fcn = hash_fcn;
     hashtab->keycmp_fcn = keycmp_fcn;
+    hashtab->key_copy_mode = key_copy_mode;
+    hashtab->value_copy_mode = value_copy_mode;
     
     dbgprint("hashtab: Created hash table @0x%lx, len=%zu, inflate_threshold=%zu, pool=@0x%lx, " \
-                "table=@0x%lx, hash_fcn=@0x%lx, keycmp_fcn=@0x%lx. \n",
+                "table=@0x%lx, hash_fcn=@0x%lx, keycmp_fcn=@0x%lx, key_copy_mode=%d, value_copy_mode=%d. \n",
                 (unsigned long)hashtab, hashtab->len, hashtab->inflate_threshold, 
                 (unsigned long)(hashtab->pool), (unsigned long)(hashtab->table), 
-                (unsigned long)(hashtab->hash_fcn), (unsigned long)(hashtab->keycmp_fcn));
+                (unsigned long)(hashtab->hash_fcn), (unsigned long)(hashtab->keycmp_fcn),
+                hashtab->key_copy_mode, hashtab->value_copy_mode);
 
     return 0;
 }
 
-int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode, size_t key_size,
-                    void *value, int value_copy_mode, size_t value_size)
+int hashtable_put(struct hashtable* const hashtab, void *key, size_t key_size,
+                    void *value, size_t value_size)
 {
     int retval = 0;
     
@@ -144,8 +193,8 @@ int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode,
     
     dbgprint("hashtab: Put into hashtable @0x%lx, key=@0x%lx, key_copy_mode=%d, key_size=%zu, " \
                 "value=@0x%lx, value_copy_mode=%d, value_size=%zu. \n",
-                (unsigned long)hashtab, (unsigned long)key, key_copy_mode, key_size, 
-                (unsigned long)value, value_copy_mode, value_size);
+                (unsigned long)hashtab, (unsigned long)key, hashtab->key_copy_mode, key_size, 
+                (unsigned long)value, hashtab->value_copy_mode, value_size);
     
 #if defined(USE_PTHREAD) && defined(HASHTAB_RWLOCK_ENABLED)
 #if (HASHTAB_RWLOCK_ENABLED == 1)
@@ -163,13 +212,13 @@ int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode,
             if (hashtab->keycmp_fcn((const void** const)key, (const void ** const)(&(entry->key))) == 0) {
                 dbgprint("hashtab: Key comparison succeeded. "\
                         "Put value into entry @0x%lx, hash=0x%x. \n", (unsigned long)entry, hash);
-                retval = put_value(hashtab->pool, entry, value, value_copy_mode, value_size);
+                retval = put_value(hashtab->pool, entry, value, hashtab->value_copy_mode, value_size);
                 goto hashtable_put_ret;
             }
         }
     }
     
-    if (++(hashtab->occupied) >= hashtab->inflate_threshold) {
+    if (hashtab->occupied >= hashtab->inflate_threshold) {
         if (inflate(hashtab) != 0) {
             goto hashtable_put_fail;
         }
@@ -185,7 +234,7 @@ int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode,
     }
     
     dbgprint("hashtab: Put key into new entry @0x%lx, hash=0x%x. \n", (unsigned long)entry, hash);
-    switch (key_copy_mode) {
+    switch (hashtab->key_copy_mode) {
         case HASHTABLE_COPY_VALUE:
             if (key_size > sizeof(entry->key)) {
                 dbgprint("hashtab: A key with key_size=%zu is too large to fit into union entry->key. " \
@@ -207,7 +256,7 @@ int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode,
     }
     
     dbgprint("hashtab: Put value into new entry @0x%lx. \n", (unsigned long)entry);
-    if (put_value(hashtab->pool, entry, value, value_copy_mode, value_size) != 0) {
+    if (put_value(hashtab->pool, entry, value, hashtab->value_copy_mode, value_size) != 0) {
         goto hashtable_put_fail;
     }
     
@@ -215,6 +264,7 @@ int hashtable_put(struct hashtable* const hashtab, void *key, int key_copy_mode,
     entry->hash = hash;
     entry->next = hashtab->table[slot];
     hashtab->table[slot] = entry;
+    ++(hashtab->occupied);
     
     goto hashtable_put_ret;
     
@@ -276,5 +326,24 @@ void* hashtable_get(struct hashtable* const hashtab, void *key)
 
 int hashtable_destroy(struct hashtable* const hashtab)
 {
+#if defined(USE_PTHREAD) && defined(HASHTAB_RWLOCK_ENABLED)
+#if (HASHTAB_RWLOCK_ENABLED == 1)
+    pthread_rwlock_wrlock(hashtab->rwlock);
+#endif
+#endif
+
+    dbgprint("hashtab: Destroying hashtable @0x%lx. \n", (unsigned long)hashtab);
+
+    free(hashtab->table);
+    crapool_destroy(hashtab->pool);
+    hashtab->table = NULL;
+    hashtab->pool = NULL;
+
+#if defined(USE_PTHREAD) && defined(HASHTAB_RWLOCK_ENABLED)
+#if (HASHTAB_RWLOCK_ENABLED == 1)
+    pthread_rwlock_unlock(hashtab->rwlock);
+#endif
+#endif
+
     return 0;
 }
