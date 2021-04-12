@@ -678,7 +678,8 @@ int dxf_parser_init()
     }
     
     if (hashtable_create(&parsers, 0, 0, 0, HASHTABLE_COPY_VALUE,
-        HASHTABLE_COPY_VALUE, (pfn_hash_t)str_hash, (pfn_keycmp_t)str_cmp) != 0) {
+        HASHTABLE_COPY_VALUE, (pfn_hash_t)str_hash, (pfn_keycmp_t)str_cmp, NULL) != 0)
+    {
         errprint("dxf_parser: hashtable_init() failed. \n");
         return -1;
     }

@@ -113,7 +113,8 @@ static int put_value(struct crapool_desc* const pool, struct hashtable_entry* co
 
 int hashtable_create(struct hashtable* const hashtab, size_t len, double load_factor, 
                     size_t pool_size, int key_copy_mode, int value_copy_mode, 
-                    pfn_hash_t hash_fcn, pfn_keycmp_t keycmp_fcn)
+                    pfn_hash_t hash_fcn, pfn_keycmp_t keycmp_fcn, 
+                    pfn_element_destroy_hook_t elem_destroy_fcn)
 {
     if ((hashtab == NULL) || (hash_fcn == NULL)) {
         return -1;
@@ -167,6 +168,7 @@ int hashtable_create(struct hashtable* const hashtab, size_t len, double load_fa
     hashtab->load_factor = load_factor;
     hashtab->hash_fcn = hash_fcn;
     hashtab->keycmp_fcn = keycmp_fcn;
+    hashtab->elem_destroy_fcn = elem_destroy_fcn;
     hashtab->key_copy_mode = key_copy_mode;
     hashtab->value_copy_mode = value_copy_mode;
     
@@ -326,6 +328,10 @@ void* hashtable_get(struct hashtable* const hashtab, void *key)
 
 int hashtable_destroy(struct hashtable* const hashtab)
 {
+    pfn_element_destroy_hook_t elem_destroy_fcn = hashtab->elem_destroy_fcn;
+    unsigned int slot;
+    struct hashtable_entry *entry;
+    
 #if defined(USE_PTHREAD) && defined(HASHTAB_RWLOCK_ENABLED)
 #if (HASHTAB_RWLOCK_ENABLED == 1)
     pthread_rwlock_wrlock(hashtab->rwlock);
@@ -333,6 +339,17 @@ int hashtable_destroy(struct hashtable* const hashtab)
 #endif
 
     dbgprint("hashtab: Destroying hashtable @0x%lx. \n", (unsigned long)hashtab);
+    
+    if (elem_destroy_fcn != NULL) {
+        for (slot = 0; slot < hashtab->len; ++slot) {
+            for (entry = hashtab->table[slot]; entry != NULL; entry = entry->next) {
+                dbgprint("hashtab: Call element destroy hook function @0x%lx on " \
+                        "entry value @0x%lx \n", (unsigned long)elem_destroy_fcn,
+                        (unsigned long)(&(entry->value)));
+                elem_destroy_fcn((void ** const)(&(entry->value)));
+            }
+        }
+    }
 
     if (hashtab->table != NULL) {
         free(hashtab->table);

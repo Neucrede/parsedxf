@@ -69,7 +69,8 @@ static int init_entity(struct dxf_entity* const entity)
 int dxf_init(struct dxf* const dxf, size_t pool_size)
 {
     if (hashtable_create(&(dxf->header), 37, 0, 0, HASHTABLE_COPY_VALUE,
-        HASHTABLE_COPY_VALUE, (pfn_hash_t)str_hash, (pfn_keycmp_t)str_cmp) != 0) {
+        HASHTABLE_COPY_VALUE, (pfn_hash_t)str_hash, (pfn_keycmp_t)str_cmp, NULL) != 0) 
+    {
         errprint("dxf: Failed to create header. \n");
         return -1;
     }
