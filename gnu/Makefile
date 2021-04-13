@@ -9,7 +9,8 @@ SOURCES = $(wildcard $(SRCDIR)/*.c)
 OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.c, %.o, $(notdir $(SOURCES))))
 DEPS = $(addprefix $(DEPDIR)/, $(patsubst %.c, %.d, $(notdir $(SOURCES))))
 CC = gcc
-CCFLAGS = -Wall -fPIC -DUSE_PTHREAD $(SRCDIR)
+CCFLAGS = -Wall -Wno-unused-variable -Wno-unused-function \
+		  -fPIC -DUSE_PTHREAD $(SRCDIR)
 LDFLAGS = --shared
 AR = ar
 ARFLAGS = rsv

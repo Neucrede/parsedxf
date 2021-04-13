@@ -3,9 +3,11 @@
 
 #ifdef _MSC_VER
 #define __INT64_T__ __int64
+#define __UINT64_T__ unsigned __int64
 #else
 #include <stdint.h>
 #define __INT64_T__ int64_t
+#define __UINT64_T__ uint64_t
 #endif
 
 #ifdef USE_PTHREAD
