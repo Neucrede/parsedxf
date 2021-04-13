@@ -55,7 +55,7 @@ static int parse_entities(struct dxf_parser_desc* const parser_desc);
 #define DXF_ENTITY_PARSER_ACTION_ON_ENTITY_TYPE(parser_desc, lexer_desc, token, entity, entity_type) \
     case DXF_ENTITY_TYPE: \
         dxf_lexer_unget_token(lexer_desc); \
-        dbgprint("dxf_parser: End of " #entity " entity. \n"); \
+        dbgprint("dxfparser: End of " #entity " entity. \n"); \
         if (parser_desc->target_layer != NULL) { \
                 dxf_add_entity(dxf, parser_desc->target_layer->name, (struct dxf_entity*)entity, DXF_ADD_ENTITY_TO_LAYER); \
         } \
@@ -116,7 +116,7 @@ static int parse_point(struct dxf_parser_desc* const parser_desc)
     struct dxf* const dxf = parser_desc->dxf;
     struct dxf_point* point;
     
-    dbgprint("dxf_parser: Point entity \n");
+    dbgprint("dxfparser: Point entity \n");
     
     if ((point = (struct dxf_point*)dxf_alloc_entity(dxf, DXF_POINT)) == NULL) {
         return -1;
@@ -153,7 +153,7 @@ static int parse_line(struct dxf_parser_desc* const parser_desc)
     struct dxf* const dxf = parser_desc->dxf;
     struct dxf_line* line;
     
-    dbgprint("dxf_parser: Line entity \n");
+    dbgprint("dxfparser: Line entity \n");
     
     if ((line = (struct dxf_line*)dxf_alloc_entity(dxf, DXF_LINE)) == NULL) {
         return -1;
@@ -208,7 +208,7 @@ static int parse_circle(struct dxf_parser_desc* const parser_desc)
     struct dxf* const dxf = parser_desc->dxf;
     struct dxf_circle* circle;
     
-    dbgprint("dxf_parser: Circle entity \n");
+    dbgprint("dxfparser: Circle entity \n");
     
     if ((circle = (struct dxf_circle*)dxf_alloc_entity(dxf, DXF_CIRCLE)) == NULL) {
         return -1;
@@ -255,7 +255,7 @@ static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
     size_t number_of_vertices = 0;
     size_t number_of_vertices_read = 0;
     
-    dbgprint("dxf_parser: LwPolyline entity \n");
+    dbgprint("dxfparser: LwPolyline entity \n");
     
     if ((lwpolyline = (struct dxf_lwpolyline*)dxf_alloc_entity(dxf, DXF_LWPOLYLINE)) == NULL) {
         return -1;
@@ -284,9 +284,10 @@ static int parse_lwpolyline(struct dxf_parser_desc* const parser_desc)
                 }
                 dbgprint("x=%f \n", token->value.f);
                 if ((vertex = dxf_alloc_binary(dxf, sizeof(struct dxf_lwpolyline_vertex))) == NULL) {
+                    errprint("dxfparser: parse_lwpolyline(): Failed to allocate space for vertices. \n");
                     return -1;
                 }
-                dbgprint("dxf_parser: Allocated space for lwpolyline vertex @0x%lx \n", 
+                dbgprint("dxfparser: parse_lwpolyline(): Allocated space for lwpolyline vertex @0x%lx \n", 
                         (unsigned long)vertex);
                 vertex->next = NULL;
                 vertex->x = token->value.f;
@@ -341,7 +342,7 @@ static int parse_arc(struct dxf_parser_desc* const parser_desc)
     struct dxf* const dxf = parser_desc->dxf;
     struct dxf_arc* arc;
     
-    dbgprint("dxf_parser: Arc entity \n");
+    dbgprint("dxfparser: Arc entity \n");
     
     if ((arc = (struct dxf_arc*)dxf_alloc_entity(dxf, DXF_ARC)) == NULL) {
         return -1;
@@ -396,7 +397,7 @@ static int parse_insert(struct dxf_parser_desc* const parser_desc)
     struct dxf_insert *insert;
     struct dxf_layer *layer_of_block = NULL;
 
-    dbgprint("dxf_parser: Insert entity \n");
+    dbgprint("dxfparser: Insert entity \n");
 
     if ((insert = (struct dxf_insert*)dxf_alloc_entity(dxf, DXF_INSERT)) == NULL) {
         return -1;
@@ -496,7 +497,7 @@ static int parse_block(struct dxf_parser_desc* const parser_desc)
     parser_desc->target_layer = NULL;
     parser_desc->target_block = NULL;
 
-    dbgprint("dxf_parser: Block \n");
+    dbgprint("dxfparser: Block \n");
 
     while (dxf_lexer_get_token(lexer_desc) == 0) {
         switch (token->tag) {
@@ -518,7 +519,7 @@ static int parse_block(struct dxf_parser_desc* const parser_desc)
                         if (strcmp(token->value.str, str_endblk) == 0) {
                             parser_desc->target_layer = NULL;
                             parser_desc->target_block = NULL;
-                            dbgprint("dxf_parser: End of block. \n");
+                            dbgprint("dxfparser: End of block. \n");
                             return 0;
                         }
                         break;
@@ -588,7 +589,7 @@ static int parse_blocks(struct dxf_parser_desc* const parser_desc)
     const pfn_parser_t *pfn_parser;
     int parser_return_value = -1;
 
-    dbgprint("dxf_parser: Parsing BLOCKS section. \n");
+    dbgprint("dxfparser: Parsing BLOCKS section. \n");
 
     parser_desc->target_layer = NULL;
     parser_desc->target_block = NULL;
@@ -612,7 +613,7 @@ static int parse_blocks(struct dxf_parser_desc* const parser_desc)
                     if (strcmp(token->value.str, str_endsec) == 0) {
                         parser_desc->target_layer = NULL;
                         parser_desc->target_block = NULL;
-                        dbgprint("dxf_parser: End of BLOCKS section. \n");
+                        dbgprint("dxfparser: End of BLOCKS section. \n");
                         return 0;
                     }
                     break;
@@ -635,7 +636,7 @@ static int parse_entities(struct dxf_parser_desc* const parser_desc)
     const pfn_parser_t *pfn_parser;
     int parser_return_value = -1;
 
-    dbgprint("dxf_parser: Parsing ENTITIES section. \n");
+    dbgprint("dxfparser: Parsing ENTITIES section. \n");
 
     parser_desc->target_layer = NULL;
     parser_desc->target_block = NULL;
@@ -657,12 +658,12 @@ static int parse_entities(struct dxf_parser_desc* const parser_desc)
                     break;
                 case 1:
                     if (strcmp(token->value.str, str_endsec) == 0) {
-                        dbgprint("dxf_parser: End of ENTITIES section. \n");
+                        dbgprint("dxfparser: End of ENTITIES section. \n");
                         return 0;
                     }
                     break;
                 default:
-                    errprint("dxf_parser: Stopped after an error occured when parsing an entity. \n");
+                    errprint("dxfparser: Stopped after an error occured when parsing an entity. \n");
                     return -1;
             }
         }
@@ -760,12 +761,12 @@ int dxf_parser_parse(struct dxf_parser_desc* const parser_desc)
                     break;
                 case 1:
                     if (strcmp(token->value.str, str_eof) == 0) {
-                        dbgprint("dxf_parser: Reached EOF. \n");
+                        dbgprint("dxfparser: Reached EOF. \n");
                         return 0;
                     }
                     break;
                 default:
-                    errprint("dxf_parser: Parser stopped on error. \n");
+                    errprint("dxfparser: dxf_parser_parse(): Parser stopped on error. \n");
                     return -1;
             }
         default:

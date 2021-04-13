@@ -246,7 +246,7 @@ static int get_line(struct dxf_lexer_desc* const desc)
     } while ((desc->cur <= end) && (i < DXF_LEXER_MAX_LINE_LENGTH));
 
     desc->line_buf[i] = '\0';
-    dbgprint("dxf_lexer: Current line is \n%s \n", desc->line_buf);
+    dbgprint("dxflexer: get_line(): Current line is \n%s \n", desc->line_buf);
     
     /* Skip remaining text in this line if any. */
     next_line(desc);
@@ -386,7 +386,7 @@ int dxf_lexer_open_desc(struct dxf_lexer_desc* const desc, const char *filename,
     fd = memmap_open(filename, O_RDONLY, 0);
     
     if (fd == (memmap_fd_t)(-1)) {
-        errprint("Failed to open %s for mapping. \n", filename);
+        errprint("dxflexer: dxf_lexer_open_desc(): Failed to open %s for mapping. \n", filename);
         return -1;
     }
     
@@ -454,7 +454,8 @@ int dxf_lexer_get_token(struct dxf_lexer_desc* const desc)
     desc->token.group_code = grp_code;
     retval = grp_code_desc->scanner(desc, NULL);
     
-    dbgprint("dxf_lexer: Current token tag=%d, group_code=%u, value=@0x%lx \n",
+    dbgprint("dxflexer: dxf_lexer_get_token(): Current token tag=%d, " \
+            "group_code=%u, value=@0x%lx \n",
             desc->token.tag, desc->token.group_code, 
             (unsigned long)(&(desc->token.value)));
             
@@ -469,7 +470,7 @@ int dxf_lexer_unget_token(struct dxf_lexer_desc* const desc)
     
     desc->cur = desc->prev;
     desc->token.tag = DXF_INVALID_TAG;
-    dbgprint("dxf_lexer: Unget token. \n");
+    dbgprint("dxflexer: dxf_lexer_unget_token(): Unget token. \n");
     return 0;
 }
 

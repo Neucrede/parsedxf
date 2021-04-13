@@ -71,12 +71,12 @@ int dxf_init(struct dxf* const dxf, size_t pool_size)
     if (hashtable_create(&(dxf->header), 37, 0, 0, HASHTABLE_COPY_VALUE,
         HASHTABLE_COPY_VALUE, (pfn_hash_t)str_hash, (pfn_keycmp_t)str_cmp, NULL) != 0) 
     {
-        errprint("dxf: Failed to create header. \n");
+        errprint("dxf: dxf_init(): Failed to create header. \n");
         return -1;
     }
     
     if ((dxf->pool = crapool_create(pool_size, NULL)) == NULL) {
-        errprint("dxf: Memory pool creation failed. \n");
+        errprint("dxf: dxf_init(): Memory pool creation failed. \n");
         return -1;
     }
 
@@ -86,12 +86,12 @@ int dxf_init(struct dxf* const dxf, size_t pool_size)
     dxf->last_accessed_block = NULL;
 
     if (dxf_add_layer(dxf, "0") == NULL) {
-        errprint("dxf: Failed to add default layer 0. \n");
+        errprint("dxf: dxf_init(): Failed to add default layer 0. \n");
         crapool_destroy(dxf->pool);
         return -1;
     }
     
-    dbgprint("dxf: Initialized dxf struct @0x%lx, pool_size=%zu. \n",
+    dbgprint("dxf: dxf_init(): Initialized dxf struct @0x%lx, pool_size=%zu. \n",
             (unsigned long)dxf, pool_size);
     
     return 0;
@@ -127,16 +127,18 @@ struct dxf_container* dxf_add_container(struct dxf* const dxf, const char *name,
     }
 
     if ((type != DXF_BLOCK) && (type != DXF_LAYER)) {
-        errprint("dxf: Bad container type %d. \n", type);
+        errprint("dxf: dxf_add_container(): Bad container type %d. \n", type);
     }
 
     if ((container_name = dxf_alloc_string(dxf, len)) == NULL) {
-        errprint("dxf: Failed to allocate pool space for storing container name. \n");
+        errprint("dxf: dxf_add_container(): Failed to allocate pool space for " \
+                "storing container name. \n");
         return NULL;
     }
 
     if ((container = (struct dxf_container*)crapool_alloc(dxf->pool, sizeof(struct dxf_container))) == NULL) {
-        errprint("dxf: Failed to allocate pool space for storing container struct. \n");
+        errprint("dxf: dxf_add_container(): Failed to allocate pool space for " \
+                "storing container struct. \n");
         return NULL;
     }
     
@@ -163,11 +165,11 @@ struct dxf_container* dxf_add_container(struct dxf* const dxf, const char *name,
             container->parent = (struct dxf_container*)parent_layer;
             break;
         default:
-            errprint("dxf: Bad container type %d. Control flow was messed up. \n", type);
+            errprint("dxf: dxf_add_container(): Bad container type %d. Control flow was messed up. \n", type);
             return NULL;
     }
     
-    dbgprint("dxf: Added container @0x%lx, name=%s, entities=@0x%lx, next=@0x%lx, type=%d \n",
+    dbgprint("dxf: dxf_add_container(): Added container @0x%lx, name=%s, entities=@0x%lx, next=@0x%lx, type=%d \n",
             (unsigned long)container, container->name, (unsigned long)(container->entities), 
             (unsigned long)(container->next), type);
     
@@ -209,14 +211,15 @@ struct dxf_container* dxf_get_container(struct dxf* const dxf, const char *name,
     for (container = head; container != NULL; container = container->next) {
         if (strcmp(container->name, name) == 0) {
             *specific_last_accessed_container = container;
-            dbgprint("dxf: Container found @0x%lx, name=%s, entities=@0x%lx, next=@0x%lx \n",
+            dbgprint("dxf: dxf_get_container(): Container found @0x%lx, " \
+                    "name=%s, entities=@0x%lx, next=@0x%lx \n",
                     (unsigned long)container, container->name, 
                     (unsigned long)(container->entities), (unsigned long)(container->next));
             return container;
         }
     }
 
-    dbgprint("dxf: Container %s not found. \n", name);
+    dbgprint("dxf: dxf_get_container(): Container %s not found. \n", name);
     return NULL;
 }
 
@@ -228,7 +231,7 @@ int dxf_add_entity(struct dxf* const dxf, const char* container_name,
     int container_type;
     
     if ((entity_type < DXF_ENTITY_TYPE_START) || (entity_type > DXF_ENTITY_TYPE_END)) {
-        errprint("dxf: Bad entity type %d. \n", entity_type);
+        errprint("dxf: dxf_add_entity(): Bad entity type %d. \n", entity_type);
         return -1;
     }
 
@@ -237,7 +240,7 @@ int dxf_add_entity(struct dxf* const dxf, const char* container_name,
             container_name = "0";
         }
         else {
-            errprint("dxf: Anonymous block. \n");
+            errprint("dxf: dxf_add_entity(): Anonymous block. \n");
             return -1;
         }
     }
@@ -250,13 +253,13 @@ int dxf_add_entity(struct dxf* const dxf, const char* container_name,
             container_type = DXF_BLOCK;
             break;
         default:
-            errprint("dxf: Unrecognized behaviour %d. \n", behaviour);
+            errprint("dxf: dxf_add_entity(): Unrecognized behaviour %d. \n", behaviour);
             return -1;
     }
 
     if ((container = dxf_get_container(dxf, container_name, container_type)) == NULL) {
         if ((container = dxf_add_container(dxf, container_name, NULL, container_type)) == NULL) {
-            errprint("dxf: Failed to allocate pool space for storing container struct. \n");
+            errprint("dxf: dxf_add_entity(): Failed to allocate pool space for storing container struct. \n");
             return -1;
         }
     }
@@ -269,14 +272,15 @@ int dxf_add_entity(struct dxf* const dxf, const char* container_name,
             entity->block = container;
             break;
         default:
-            errprint("dxf: Unrecognized behaviour %d. \n", behaviour);
+            errprint("dxf: dxf_add_entity(): Unrecognized behaviour %d. \n", behaviour);
             return -1;
     }
 
     entity->next = container->entities[entity_type];
     container->entities[entity_type] = entity;
     
-    dbgprint("dxf: Added entity @0x%lx (type=%d) to container @0x%lx (name=%s, type=%d). \n",
+    dbgprint("dxf: dxf_add_entity(): Added entity @0x%lx (type=%d) to " \
+                "container @0x%lx (name=%s, type=%d). \n",
                 (unsigned long)entity, entity_type, 
                 (unsigned long)container, container->name, container->type);
 
@@ -288,7 +292,7 @@ void* dxf_alloc_binary(struct dxf* const dxf, size_t size)
     void *buf = crapool_alloc(dxf->pool, size);
 
     if (buf == NULL) {
-        errprint("dxf: Allocation failed. size=%zu \n", size);
+        errprint("dxf: dxf_alloc_binary(): Allocation failed. size=%zu \n", size);
     }
 
     return buf;
@@ -299,7 +303,7 @@ char* dxf_alloc_string(struct dxf* const dxf, size_t len)
     char *str = crapool_calloc(dxf->pool, 1, len + 2);
 
     if (str == NULL) {
-        errprint("dxf: String buffer allocation failed. size=%zu \n", len);
+        errprint("dxf: dxf_alloc_string(): String buffer allocation failed. size=%zu \n", len);
     }
 
     return str;
@@ -330,7 +334,8 @@ struct dxf_entity* dxf_alloc_entity(struct dxf* const dxf, int entity_type)
             size = sizeof(struct dxf_insert);
             break;
         default:
-            errprint("dxf: Could not allocate space for entity type %d. \n", entity_type);
+            errprint("dxf: dxf_alloc_entity(): Could not allocate space " \
+                    "for entity type %d. \n", entity_type);
             return NULL;
     }
     
@@ -344,7 +349,8 @@ struct dxf_entity* dxf_alloc_entity(struct dxf* const dxf, int entity_type)
         init_entity(entity);
     }
     
-    dbgprint("dxf: Allocated space for new entity @0x%lx, type=%d, size=%zu. \n",
+    dbgprint("dxf: dxf_alloc_entity(): Allocated space for new entity @0x%lx, " \
+                "type=%d, size=%zu. \n",
                 (unsigned long)entity, entity_type, entity->size);
     return entity;
 }
