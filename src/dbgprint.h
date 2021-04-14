@@ -3,27 +3,15 @@
 
 #include <stdio.h>
 
-#if !defined(_MSC_VER) || (defined(_MSC_VER) && _MSC_VER >= 1400)
-    #ifdef NO_DBGPRINT
-        #define dbgprint(sz, ...) (void)0
-    #elif defined(DEBUG) || defined(_DEBUG) || defined(_DEBUG_) || defined(__DEBUG__)
-        #ifndef DEBUG
-            #define DEBUG 1
-        #endif
-
-        #define dbgprint(sz, ...) fprintf(stdout, sz, ##__VA_ARGS__)
-    #else
-        #define dbgprint(...)
+#if defined(DEBUG) || defined(_DEBUG) || defined(_DEBUG_) || defined(__DEBUG__)
+    #ifndef DEBUG
+        #define DEBUG 1
     #endif
+#endif
 
-    #ifdef NO_ERRPRINT
-        #define errprint(sz, ...) (void)0
-    #else
-        #define errprint(sz, ...) fprintf(stderr, sz, ##__VA_ARGS__)
-#endif
-#else
-    void dbgprint(const char *format, ...);
-    void errprint(const char *format, ...);
-#endif
+void enable_dbgprint(int enabled);
+void enable_errprint(int enabled);
+void dbgprint(const char *format, ...);
+void errprint(const char *format, ...);
 
 #endif /* __DBGPRINT_H__ */

@@ -2,38 +2,47 @@
 #include <stdarg.h>
 #include "dbgprint.h"
 
-#if defined(_MSC_VER) && _MSC_VER < 1400
+#if defined(DEBUG) && !defined(NO_DBGPRINT)
+static int dbgprint_enabled = 1;
+#else
+static int dbgprint_enabled = 0;
+#endif
 
-#ifndef NO_DBGPRINT
+#if defined(NO_ERRPRINT)
+static int errprint_enabled = 0;
+#else
+static int errprint_enabled = 1;
+#endif
+
+void enable_dbgprint(int enabled)
+{
+    dbgprint_enabled = enabled;
+}
+
+void enable_errprint(int enabled)
+{
+    errprint_enabled = enabled;
+}
+
 void dbgprint(const char *format, ...)
 {
     va_list arg_list;
-
-    va_start(arg_list, format);
-    vfprintf(stdout, format, arg_list);
-    va_end(arg_list);
+    
+    if (dbgprint_enabled != 0) {
+        va_start(arg_list, format);
+        vfprintf(stdout, format, arg_list);
+        va_end(arg_list);
+    }
 }
-#else
-void dbgprint(const char *format, ...)
-{
-    (void)format;
-}
-#endif
 
-#ifndef NO_ERRPRINT
 void errprint(const char *format, ...)
 {
     va_list arg_list;
 
-    va_start(arg_list, format);
-    vfprintf(stderr, format, arg_list);
-    va_end(arg_list);
+    if (errprint_enabled != 0) {
+        va_start(arg_list, format);
+        vfprintf(stderr, format, arg_list);
+        va_end(arg_list);
+    }       
 }
-#else
-void errprint(const char *format, ...)
-{
-    (void)format;
-}
-#endif
 
-#endif /* defined(_MSC_VER) && _MSC_VER < 1400 */
