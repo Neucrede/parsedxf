@@ -11,7 +11,7 @@ DEPS = $(addprefix $(DEPDIR)/, $(patsubst %.c, %.d, $(notdir $(SOURCES))))
 CC = gcc
 CCFLAGS = -Wall -Wno-unused-variable -Wno-unused-function \
 		  -fPIC -D_POSIX_C_SOURCE $(INCDIRS)
-LDFLAGS = --shared
+LDFLAGS = --shared -static-libgcc
 AR = ar
 ARFLAGS = rsv
 
