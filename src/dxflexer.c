@@ -142,7 +142,7 @@ static int xlat_tab_init()
 #ifdef DEBUG
     for (grp_code = 0; grp_code < 2000; ++grp_code) {
         if ((desc = xlat_tab_get(grp_code)) != &dxf_invalid_desc) {
-            printf("grp_code %u: tag=%d, name=%s, start=%u, end=%u, scanner=@0x%lx \n", 
+            dbgprint("grp_code %u: tag=%d, name=%s, start=%u, end=%u, scanner=@0x%lx \n", 
                     grp_code, desc->tag, desc->name,
                     desc->range_start, desc->range_end, (unsigned long)(desc->scanner));
         }
