@@ -31,7 +31,7 @@ $(OUT) : $(OBJS)
 	$(CC) -o $(OUT) $(OBJS) $(LDFLAGS)
 	
 $(OUTA) : $(OBJS)
-	$(AR) $(ARFLAGS) $@ $(OBJS)
+#	$(AR) $(ARFLAGS) $@ $(OBJS)
 
 $(OBJDIR)/%.o : $(SRCDIR)/%.c
 	$(CC) -c $(CCFLAGS) $< -o $@
