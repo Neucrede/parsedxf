@@ -4,14 +4,15 @@ OUTDIR = ./out
 OBJDIR = ./obj
 DEPDIR = ./deps
 SRCDIR = ../src
-INCDIRS = -I$(SRCDIR)
+INCDIRS = -I$(SRCDIR) -I../../ncrdcmn/src
+LIBDIRS = -L../../ncrdcmn/mingw
 SOURCES = $(wildcard $(SRCDIR)/*.c)
 OBJS = $(addprefix $(OBJDIR)/, $(patsubst %.c, %.o, $(notdir $(SOURCES))))
 DEPS = $(addprefix $(DEPDIR)/, $(patsubst %.c, %.d, $(notdir $(SOURCES))))
 CC = gcc
 CCFLAGS = -Wall -Wno-unused-variable -Wno-unused-function \
 		  -fPIC -D_POSIX_C_SOURCE $(INCDIRS)
-LDFLAGS = --shared -static-libgcc
+LDFLAGS = --shared -static-libgcc $(LIBDIRS) -lncrdcmn
 AR = ar
 ARFLAGS = rsv
 
@@ -26,6 +27,7 @@ release : CCFLAGS += -O2
 release : INCLUDE_DEPS = 1
 
 main : $(OUT) $(OUTA)
+	-cp ../../ncrdcmn/mingw/libncrdcmn.dll ./
 
 $(OUT) : $(OBJS)
 	$(CC) -o $(OUT) $(OBJS) $(LDFLAGS)
