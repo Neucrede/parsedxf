@@ -508,7 +508,7 @@ static int parse_block(struct dxf_parser_desc* const parser_desc)
                     }
                 }
                 else {
-                    errprint("dxf_parser: Skipping entity type %s \n", token->value.str);
+                    dbgprint("dxf_parser: Skipping entity type %s \n", token->value.str);
                     continue;
                 }
 
@@ -602,7 +602,7 @@ static int parse_blocks(struct dxf_parser_desc* const parser_desc)
                 }
             }
             else {
-                errprint("dxf_parser: Skipping object type %s \n", token->value.str);
+                dbgprint("dxf_parser: Skipping object type %s \n", token->value.str);
                 continue;
             }
 
@@ -649,7 +649,7 @@ static int parse_entities(struct dxf_parser_desc* const parser_desc)
                 }
             }
             else {
-                errprint("dxf_parser: Skipping entity type %s \n", token->value.str);
+                dbgprint("dxf_parser: Skipping entity type %s \n", token->value.str);
                 continue;
             }
 
